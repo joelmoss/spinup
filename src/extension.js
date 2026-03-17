@@ -1,6 +1,5 @@
 const vscode = require('vscode');
-const { ConfigLoader } = require('./config/loader');
-const { ConfigWatcher } = require('./config/watcher');
+const { loadConfig, onDidChangeConfig } = require('./config/settings');
 const { TerminalManager } = require('./terminal/terminalManager');
 const { CommandManager } = require('./commands/commandManager');
 const { SpinupTreeDataProvider } = require('./ui/treeDataProvider');
@@ -9,7 +8,7 @@ const { FileWatcherManager } = require('./fileWatcher/fileWatcherManager');
 
 let lastValidConfig = null;
 
-async function activate(context) {
+function activate(context) {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
     return;
@@ -20,7 +19,6 @@ async function activate(context) {
   const treeDataProvider = new SpinupTreeDataProvider(commandManager);
   const statusBarManager = new StatusBarManager(commandManager);
   const fileWatcherManager = new FileWatcherManager(commandManager, workspaceFolder);
-  const configWatcher = new ConfigWatcher(workspaceFolder);
 
   const treeView = vscode.window.createTreeView('spinupCommands', {
     treeDataProvider,
@@ -38,16 +36,18 @@ async function activate(context) {
   reg('spinup.restart', (item) => commandManager.restart(item.state.name));
   reg('spinup.clear', (item) => commandManager.clear(item.state.name));
   reg('spinup.openTerminal', (item) => commandManager.showTerminal(item.state.name));
-  reg('spinup.reloadConfig', () => loadConfig());
+  reg('spinup.openSettings', () =>
+    vscode.commands.executeCommand('workbench.action.openSettings', 'spinup.commands'),
+  );
 
-  configWatcher.onDidChange(() => loadConfig());
+  const configDisposable = onDidChangeConfig(() => applyConfig());
 
-  async function loadConfig() {
-    const config = await ConfigLoader.load(workspaceFolder);
+  function applyConfig() {
+    const config = loadConfig();
     if (config) {
       lastValidConfig = config;
       if (commandManager.totalCount === 0) {
-        await commandManager.initialize(config);
+        commandManager.initialize(config);
       } else {
         commandManager.reconcile(config);
       }
@@ -55,9 +55,10 @@ async function activate(context) {
     } else if (lastValidConfig) {
       vscode.window.showWarningMessage('Spinup: Config error — keeping previous configuration.');
     }
+    vscode.commands.executeCommand('setContext', 'spinup.hasCommands', commandManager.totalCount > 0);
   }
 
-  await loadConfig();
+  applyConfig();
 
   context.subscriptions.push(
     treeView,
@@ -65,7 +66,7 @@ async function activate(context) {
     commandManager,
     statusBarManager,
     fileWatcherManager,
-    configWatcher,
+    configDisposable,
   );
 }
 

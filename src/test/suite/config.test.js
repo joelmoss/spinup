@@ -1,24 +1,63 @@
 const assert = require('assert');
-const { validateConfig } = require('../../config/validator');
+const vscode = require('vscode');
+const { loadConfig } = require('../../config/settings');
 
-suite('ConfigValidator', () => {
-  test('validates a minimal config', () => {
-    const config = validateConfig({
-      commands: {
-        Server: { command: 'npm run dev' },
-      },
-    });
+suite('Settings', () => {
+  let originalGet;
+
+  function stubCommands(commands) {
+    const config = vscode.workspace.getConfiguration('spinup');
+    originalGet = config.get;
+    // Stub getConfiguration to return our test data
+    const origGetConfig = vscode.workspace.getConfiguration;
+    vscode.workspace.getConfiguration = (section) => {
+      if (section === 'spinup') {
+        return {
+          get(key, defaultValue) {
+            if (key === 'commands') return commands;
+            return defaultValue;
+          },
+        };
+      }
+      return origGetConfig(section);
+    };
+  }
+
+  teardown(() => {
+    // Restore original getConfiguration if it was stubbed
+    if (vscode.workspace._originalGetConfiguration) {
+      vscode.workspace.getConfiguration = vscode.workspace._originalGetConfiguration;
+      delete vscode.workspace._originalGetConfiguration;
+    }
+  });
+
+  function withCommands(commands) {
+    const origGetConfig = vscode.workspace.getConfiguration;
+    vscode.workspace._originalGetConfiguration = origGetConfig;
+    vscode.workspace.getConfiguration = (section) => {
+      if (section === 'spinup') {
+        return {
+          get(key, defaultValue) {
+            if (key === 'commands') return commands;
+            return defaultValue;
+          },
+        };
+      }
+      return origGetConfig(section);
+    };
+  }
+
+  test('loads a minimal config', () => {
+    withCommands({ Server: { command: 'npm run dev' } });
+    const config = loadConfig();
     assert.ok(config);
     assert.strictEqual(Object.keys(config.commands).length, 1);
     assert.strictEqual(config.commands['Server'].command, 'npm run dev');
   });
 
   test('applies defaults', () => {
-    const config = validateConfig({
-      commands: {
-        Server: { command: 'npm run dev' },
-      },
-    });
+    withCommands({ Server: { command: 'npm run dev' } });
+    const config = loadConfig();
     assert.ok(config);
     const cmd = config.commands['Server'];
     assert.strictEqual(cmd.autostart, true);
@@ -27,19 +66,18 @@ suite('ConfigValidator', () => {
   });
 
   test('preserves explicit values', () => {
-    const config = validateConfig({
-      commands: {
-        Worker: {
-          command: 'php artisan queue:work',
-          autostart: false,
-          autoRestart: true,
-          interactive: true,
-          cwd: './backend',
-          env: { NODE_ENV: 'production' },
-          watch: ['app/**'],
-        },
+    withCommands({
+      Worker: {
+        command: 'php artisan queue:work',
+        autostart: false,
+        autoRestart: true,
+        interactive: true,
+        cwd: './backend',
+        env: { NODE_ENV: 'production' },
+        watch: ['app/**'],
       },
     });
+    const config = loadConfig();
     assert.ok(config);
     const cmd = config.commands['Worker'];
     assert.strictEqual(cmd.autostart, false);
@@ -50,17 +88,15 @@ suite('ConfigValidator', () => {
     assert.deepStrictEqual(cmd.watch, ['app/**']);
   });
 
-  test('rejects config without commands', () => {
-    const config = validateConfig({});
+  test('returns null for empty commands', () => {
+    withCommands({});
+    const config = loadConfig();
     assert.strictEqual(config, null);
   });
 
-  test('rejects command without command string', () => {
-    const config = validateConfig({
-      commands: {
-        Bad: { autostart: true },
-      },
-    });
+  test('returns null when command string is missing', () => {
+    withCommands({ Bad: { autostart: true } });
+    const config = loadConfig();
     assert.strictEqual(config, null);
   });
 });

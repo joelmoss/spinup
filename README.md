@@ -1,17 +1,17 @@
 # Spinup
 
-A Visual Studio Code extension that lets you define and manage multiple concurrent processes from a sidebar. Configure your dev environment commands in a single `spinup.yml` (or `spinup.json`) file and start, stop, restart, and monitor them without leaving the editor.
+A Visual Studio Code extension that lets you define and manage multiple concurrent processes from a sidebar. Configure your dev environment commands in VS Code settings and start, stop, restart, and monitor them without leaving the editor.
 
 ## Key Features
 
-- Define all your development processes (servers, watchers, compilers, etc.) in one config file
+- Define all your development processes (servers, watchers, compilers, etc.) in VS Code settings
 - Start, stop, and restart commands individually or all at once from a dedicated sidebar
 - Auto-start commands when the workspace opens
 - Auto-restart crashed commands with exponential backoff (up to 5 retries)
 - File watching -- automatically restart a command when matching files change
 - Per-command working directory and environment variables
 - Status bar indicator showing how many processes are running
-- Live-reloading configuration -- edits to `spinup.yml` / `spinup.json` are picked up automatically
+- Live-reloading configuration -- changes to settings are picked up automatically
 
 ---
 
@@ -34,8 +34,7 @@ A Visual Studio Code extension that lets you define and manage multiple concurre
 - **Language**: JavaScript (CommonJS)
 - **Runtime**: VS Code Extension Host (Node.js)
 - **Extension API**: VS Code 1.85+
-- **Config Parsing**: `yaml` (YAML files), built-in `JSON.parse` (JSON files)
-- **Config Validation**: `ajv` (JSON Schema draft-07)
+- **Config**: VS Code native settings API (`vscode.workspace.getConfiguration`)
 - **Testing**: Mocha via `@vscode/test-electron`
 
 ---
@@ -63,7 +62,7 @@ cd spinup
 npm install
 ```
 
-This installs both runtime dependencies (`ajv`, `yaml`) and dev dependencies (Mocha, VS Code test electron, etc.).
+This installs dev dependencies (Mocha, VS Code test electron, etc.). There are no runtime dependencies.
 
 ### 3. Run the Extension in Development
 
@@ -71,19 +70,24 @@ Open the project in VS Code, then press **F5** (or select **Run > Start Debuggin
 
 ### 4. Try It Out
 
-In the Extension Development Host window, create a `spinup.yml` file in the workspace root:
+In the Extension Development Host window, open your workspace settings (`.vscode/settings.json`) and add:
 
-```yaml
-commands:
-  Server:
-    command: "npm run dev"
-  Worker:
-    command: "npm run worker"
-    autostart: false
-  Watcher:
-    command: "npm run watch"
-    watch:
-      - "src/**/*.js"
+```json
+{
+  "spinup.commands": {
+    "Server": {
+      "command": "npm run dev"
+    },
+    "Worker": {
+      "command": "npm run worker",
+      "autostart": false
+    },
+    "Watcher": {
+      "command": "npm run watch",
+      "watch": ["src/**/*.js"]
+    }
+  }
+}
 ```
 
 The Spinup sidebar will appear in the activity bar. From there you can start, stop, and restart each command.
@@ -92,44 +96,51 @@ The Spinup sidebar will appear in the activity bar. From there you can start, st
 
 ## Configuration Reference
 
-Spinup is activated when a workspace contains a `spinup.yml` or `spinup.json` file at the root. YAML is checked first. The file must conform to the JSON Schema defined in `spinup.schema.json`.
+Spinup is configured via the `spinup.commands` setting in VS Code settings. You can set it in workspace settings (`.vscode/settings.json`), user settings, or via the Settings UI. The schema is validated by VS Code's built-in settings validation.
 
 ### Minimal Example
 
-```yaml
-commands:
-  Server:
-    command: "npm run dev"
+```json
+{
+  "spinup.commands": {
+    "Server": {
+      "command": "npm run dev"
+    }
+  }
+}
 ```
 
 ### Full Example
 
-```yaml
-commands:
-  Rails:
-    command: "bin/rails server"
-    autostart: true
-    autoRestart: true
-    cwd: "./backend"
-    env:
-      RAILS_ENV: "development"
-    watch:
-      - "config/**"
-      - "app/**/*.rb"
-
-  Vite:
-    command: "npx vite"
-    autostart: true
-
-  Sidekiq:
-    command: "bundle exec sidekiq"
-    autostart: false
-    autoRestart: true
-
-  Console:
-    command: "bin/rails console"
-    autostart: false
-    interactive: true
+```json
+{
+  "spinup.commands": {
+    "Rails": {
+      "command": "bin/rails server",
+      "autostart": true,
+      "autoRestart": true,
+      "cwd": "./backend",
+      "env": {
+        "RAILS_ENV": "development"
+      },
+      "watch": ["config/**", "app/**/*.rb"]
+    },
+    "Vite": {
+      "command": "npx vite",
+      "autostart": true
+    },
+    "Sidekiq": {
+      "command": "bundle exec sidekiq",
+      "autostart": false,
+      "autoRestart": true
+    },
+    "Console": {
+      "command": "bin/rails console",
+      "autostart": false,
+      "interactive": true
+    }
+  }
+}
 ```
 
 ### Property Reference
@@ -146,16 +157,14 @@ commands:
 
 ### Live Reload
 
-Spinup watches `spinup.yml` and `spinup.json` for changes (debounced at 500ms). When the config file is saved:
+Spinup listens for changes to VS Code settings via `onDidChangeConfiguration`. When the `spinup.commands` setting changes:
 
 - New commands are added and auto-started if configured.
 - Removed commands are stopped and disposed.
 - Existing commands have their configuration updated in place.
-- If the new config has a parse or validation error, the previous valid configuration is kept and a warning is shown.
+- If the new config is invalid, the previous valid configuration is kept and a warning is shown.
 
-### JSON Schema Validation
-
-Spinup ships a JSON Schema file (`spinup.schema.json`) and registers it with VS Code for both `spinup.yml` and `spinup.json`. This gives you autocomplete and inline validation when editing your config file.
+VS Code's built-in settings UI provides autocomplete and validation for the `spinup.commands` setting.
 
 ---
 
@@ -177,9 +186,7 @@ spinup/
 │   ├── extension.js             # Extension entry point (activate/deactivate)
 │   ├── types.js                 # Shared constants (CommandStatus enum)
 │   ├── config/
-│   │   ├── loader.js            # Reads and parses spinup.yml / spinup.json
-│   │   ├── validator.js         # Validates config against JSON Schema via Ajv
-│   │   └── watcher.js           # Watches config files for changes
+│   │   └── settings.js          # Reads config from VS Code settings
 │   ├── commands/
 │   │   ├── commandManager.js    # Orchestrates all command processes
 │   │   ├── commandProcess.js    # Manages a single command's lifecycle
@@ -204,7 +211,6 @@ spinup/
 │           ├── terminalManager.test.js
 │           ├── spinupTerminal.test.js
 │           └── treeItems.test.js
-├── spinup.schema.json           # JSON Schema for spinup.yml / spinup.json
 ├── package.json                 # Extension manifest and scripts
 ├── .gitignore
 └── .vscodeignore                # Files excluded from the packaged extension
@@ -212,13 +218,13 @@ spinup/
 
 ### Extension Lifecycle
 
-1. **Activation** -- VS Code activates Spinup when a workspace contains `spinup.yml` or `spinup.json` (defined by `activationEvents` in `package.json`).
-2. **Config Loading** -- `ConfigLoader` reads the file, parses YAML/JSON, and validates it against the schema using `Ajv`. Defaults are applied for optional properties.
+1. **Activation** -- VS Code activates Spinup when the sidebar view or a command is triggered.
+2. **Config Loading** -- `loadConfig()` reads from `vscode.workspace.getConfiguration('spinup')` and applies defaults for optional properties.
 3. **Command Initialization** -- `CommandManager.initialize()` creates a `CommandProcess` for each configured command and auto-starts those with `autostart: true`.
 4. **Terminal Creation** -- Each `CommandProcess` asks `TerminalManager` for a `SpinupTerminal`, which wraps `vscode.window.createTerminal()`. Non-interactive commands run via `exec` so process exit closes the terminal and is detected. Interactive commands use `sendText()` so the shell stays alive.
 5. **UI Updates** -- `SpinupTreeDataProvider` listens to `CommandManager.onDidChange` events and refreshes the sidebar. `StatusBarManager` updates the "X/Y running" indicator.
 6. **File Watching** -- `FileWatcherManager` creates `vscode.FileSystemWatcher` instances for each command's `watch` patterns. When a file changes, the corresponding running command is restarted (debounced at 1s).
-7. **Config Hot Reload** -- `ConfigWatcher` monitors config file changes (debounced at 500ms) and triggers `CommandManager.reconcile()`, which diffs the old and new configs, adding/removing/updating commands as needed.
+7. **Config Hot Reload** -- `onDidChangeConfig` listens for VS Code settings changes filtered to `spinup` and triggers `CommandManager.reconcile()`, which diffs the old and new configs, adding/removing/updating commands as needed.
 8. **Deactivation** -- All disposables registered via `context.subscriptions` are cleaned up by VS Code.
 
 ### Auto-Restart with Exponential Backoff
@@ -256,10 +262,10 @@ The extension registers the following commands:
 ### Data Flow
 
 ```
-spinup.yml/json
+VS Code Settings (spinup.commands)
        │
        ▼
-ConfigLoader (parse + validate)
+loadConfig() (read + defaults)
        │
        ▼
 CommandManager (orchestration)
@@ -319,7 +325,7 @@ src/test/
 ### What Is Tested
 
 - **AutoRestartPolicy** -- Initial state, delay doubling, 30s cap, 5-retry limit, and reset behavior.
-- **ConfigValidator** -- Minimal config acceptance, default application, explicit value preservation, rejection of missing `commands` key, and rejection of commands without a `command` string.
+- **Settings** -- Config loading from VS Code settings, default application, explicit value preservation, and rejection of commands without a `command` string.
 - **CommandManager** -- Initialization, reconciliation (add/remove/update commands), state sorting, counts, events, and disposal.
 - **CommandProcess** -- Lifecycle (start/stop/restart), status transitions, event firing, idempotency, and config updates.
 - **TerminalManager** -- Pool management (getOrCreate, get, remove, disposeAll), open/closed terminal handling.
@@ -366,17 +372,11 @@ You will need a Personal Access Token for the `joelmoss` publisher account. See 
 
 ### Spinup Sidebar Does Not Appear
 
-The extension only activates when `spinup.yml` or `spinup.json` exists at the workspace root. Make sure the file is present and the workspace folder is opened (not just a single file).
+Make sure you have a workspace folder opened (not just a single file). The Spinup sidebar activates when its view is rendered.
 
-### Config Errors on Save
+### Config Errors
 
-If you see "Spinup: Invalid config" or "Spinup: Failed to parse", your config file has a syntax or schema error. Common causes:
-
-- Missing the required `commands` key at the top level.
-- A command entry missing the required `command` property.
-- YAML indentation issues.
-
-The JSON Schema validation in VS Code will underline errors in the editor if you are editing `spinup.yml` or `spinup.json`.
+If you see "Spinup: Command ... is missing a valid command string", check that each entry in `spinup.commands` has a `command` property with a string value. VS Code's Settings UI provides validation and autocomplete for the setting.
 
 ### Command Stays in "Errored" State
 
@@ -388,7 +388,7 @@ When you click "Show Terminal" on a running command, VS Code should bring the co
 
 ### Config Changes Not Picked Up
 
-Config file changes are debounced at 500ms. If you edit and save very rapidly, wait a moment. You can also manually reload via the refresh button in the Spinup sidebar title bar, or run the **Spinup: Reload Configuration** command from the command palette.
+Settings changes are detected via VS Code's `onDidChangeConfiguration` event. You can also manually reload via the refresh button in the Spinup sidebar title bar, or run the **Spinup: Reload Configuration** command from the command palette.
 
 ### File Watch Restarts Not Triggering
 

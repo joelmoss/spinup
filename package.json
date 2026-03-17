@@ -1,7 +1,7 @@
 {
   "name": "spinup",
   "displayName": "Spinup",
-  "description": "Define and manage multiple concurrent processes from a sidebar via spinup.yml",
+  "description": "Define and manage multiple concurrent processes from a sidebar via VS Code settings",
   "version": "0.1.0",
   "publisher": "joelmoss",
   "license": "MIT",
@@ -14,10 +14,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "workspaceContains:spinup.yml",
-    "workspaceContains:spinup.json"
-  ],
+  "activationEvents": [],
   "main": "./src/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -38,6 +35,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "spinupCommands",
+        "contents": "No commands configured.\n\nAdd commands to your workspace settings to get started.\n\n[Open Settings](command:spinup.openSettings)"
+      }
+    ],
     "commands": [
       {
         "command": "spinup.startAll",
@@ -85,35 +88,24 @@
         "title": "Show Terminal",
         "category": "Spinup",
         "icon": "$(terminal)"
-      },
-      {
-        "command": "spinup.reloadConfig",
-        "title": "Reload Configuration",
-        "category": "Spinup",
-        "icon": "$(refresh)"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "spinup.startAll",
-          "when": "view == spinupCommands",
+          "when": "view == spinupCommands && spinup.hasCommands",
           "group": "navigation@1"
         },
         {
           "command": "spinup.stopAll",
-          "when": "view == spinupCommands",
+          "when": "view == spinupCommands && spinup.hasCommands",
           "group": "navigation@2"
         },
         {
           "command": "spinup.restartAll",
-          "when": "view == spinupCommands",
+          "when": "view == spinupCommands && spinup.hasCommands",
           "group": "navigation@3"
-        },
-        {
-          "command": "spinup.reloadConfig",
-          "when": "view == spinupCommands",
-          "group": "navigation@4"
         }
       ],
       "view/item/context": [
@@ -176,32 +168,69 @@
         "when": "view == spinupCommands"
       }
     ],
-    "jsonValidation": [
-      {
-        "fileMatch": "spinup.json",
-        "url": "./spinup.schema.json"
+    "configuration": {
+      "title": "Spinup",
+      "properties": {
+        "spinup.commands": {
+          "type": "object",
+          "default": {},
+          "description": "Map of command names to their configuration",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["command"],
+            "properties": {
+              "command": {
+                "type": "string",
+                "description": "The shell command to execute"
+              },
+              "autostart": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to start this command automatically on activation"
+              },
+              "autoRestart": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether to restart this command on crash with exponential backoff"
+              },
+              "interactive": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether this command requires interactive terminal input"
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Working directory relative to workspace root"
+              },
+              "env": {
+                "type": "object",
+                "description": "Environment variables for this command",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "watch": {
+                "type": "array",
+                "description": "Glob patterns of files to watch — restarts command on change",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
       }
-    ],
-    "yamlValidation": [
-      {
-        "fileMatch": "spinup.yml",
-        "url": "./spinup.schema.json"
-      }
-    ]
+    }
   },
   "scripts": {
     "lint": "eslint src --ext js",
     "test": "node ./src/test/runTests.js"
   },
-  "dependencies": {
-    "ajv": "^8.12.0",
-    "yaml": "^2.3.4"
-  },
-  "overrides": {
-    "serialize-javascript": "^7.0.3"
-  },
   "devDependencies": {
     "@vscode/test-electron": "^2.3.8",
     "mocha": "^10.2.0"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.3"
   }
 }
