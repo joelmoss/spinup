@@ -40,16 +40,17 @@ function activate(context) {
     vscode.commands.executeCommand('workbench.action.openSettings', 'spinup.commands'),
   );
 
+
   const configDisposable = onDidChangeConfig(() => applyConfig());
 
-  function applyConfig() {
+  async function applyConfig() {
     const config = loadConfig();
     if (config) {
       lastValidConfig = config;
       if (commandManager.totalCount === 0) {
-        commandManager.initialize(config);
+        await commandManager.initialize(config);
       } else {
-        commandManager.reconcile(config);
+        await commandManager.reconcile(config);
       }
       fileWatcherManager.setup(config);
     } else if (lastValidConfig) {

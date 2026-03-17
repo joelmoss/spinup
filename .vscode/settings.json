@@ -1,0 +1,10 @@
+{
+  "spinup.commands": {
+    "server": {
+      "command": "serve"
+    },
+    "test": {
+      "command": "echo 'Hello, World!'"
+    }
+  }
+}

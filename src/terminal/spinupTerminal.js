@@ -15,16 +15,34 @@ class SpinupTerminal {
     return this._terminal !== undefined;
   }
 
-  create() {
+  get terminal() {
+    return this._terminal;
+  }
+
+  async create(splitFrom) {
     if (this._terminal) {
       return;
     }
 
-    this._terminal = vscode.window.createTerminal({
-      name: `Spinup: ${this.name}`,
-      cwd: this._cwd,
-      env: this._env,
-    });
+    if (splitFrom) {
+      splitFrom.show(false);
+      await new Promise(r => setTimeout(r, 100));
+
+      const opened = new Promise(resolve => {
+        const listener = vscode.window.onDidOpenTerminal(t => {
+          listener.dispose();
+          resolve(t);
+        });
+      });
+      await vscode.commands.executeCommand('workbench.action.terminal.split');
+      this._terminal = await opened;
+    } else {
+      this._terminal = vscode.window.createTerminal({
+        name: `Spinup: ${this.name}`,
+        cwd: this._cwd,
+        env: this._env,
+      });
+    }
 
     this._closeListener = vscode.window.onDidCloseTerminal(t => {
       if (t === this._terminal) {
@@ -37,9 +55,9 @@ class SpinupTerminal {
     });
   }
 
-  sendText(text) {
+  async sendText(text) {
     if (!this._terminal) {
-      this.create();
+      await this.create();
     }
     this._terminal.sendText(text);
   }

@@ -77,7 +77,7 @@ suite('CommandManager', () => {
       Server: { command: 'npm start', autostart: false },
       Worker: { command: 'npm run worker', autostart: false },
     });
-    manager.reconcile(config2);
+    await manager.reconcile(config2);
     assert.strictEqual(manager.totalCount, 2);
   });
 
@@ -92,7 +92,7 @@ suite('CommandManager', () => {
     const config2 = makeConfig({
       Server: { command: 'npm start', autostart: false },
     });
-    manager.reconcile(config2);
+    await manager.reconcile(config2);
     assert.strictEqual(manager.totalCount, 1);
     const names = manager.getStates().map(s => s.name);
     assert.ok(names.includes('Server'));
@@ -108,7 +108,7 @@ suite('CommandManager', () => {
     const config2 = makeConfig({
       Server: { command: 'npm run dev', autostart: false },
     });
-    manager.reconcile(config2);
+    await manager.reconcile(config2);
     const states = manager.getStates();
     assert.strictEqual(states[0].config.command, 'npm run dev');
   });
@@ -131,7 +131,7 @@ suite('CommandManager', () => {
     });
     await manager.initialize(config);
 
-    manager.start('Server');
+    await manager.start('Server');
     manager.stop('Server');
     const states = manager.getStates();
     assert.strictEqual(states[0].status, CommandStatus.Stopped);
@@ -143,9 +143,9 @@ suite('CommandManager', () => {
     });
     await manager.initialize(config);
 
-    manager.start('NonExistent');
+    await manager.start('NonExistent');
     manager.stop('NonExistent');
-    manager.restart('NonExistent');
+    await manager.restart('NonExistent');
     manager.clear('NonExistent');
     manager.showTerminal('NonExistent');
   });
@@ -184,7 +184,7 @@ suite('CommandManager', () => {
     const config2 = makeConfig({
       Server: { command: 'npm run dev', autostart: false },
     });
-    manager.reconcile(config2);
+    await manager.reconcile(config2);
     assert.strictEqual(fired, true);
   });
 
@@ -196,5 +196,14 @@ suite('CommandManager', () => {
     await manager.initialize(config);
     manager.dispose();
     assert.strictEqual(manager.totalCount, 0);
+  });
+
+  test('first getOrCreate has no splitFrom, second has splitFrom', async () => {
+    const { terminal: t1, splitFrom: sf1 } = terminalManager.getOrCreate('Server', '/tmp', undefined);
+    assert.strictEqual(sf1, undefined);
+    await t1.create();
+
+    const { splitFrom: sf2 } = terminalManager.getOrCreate('Worker', '/tmp', undefined);
+    assert.strictEqual(sf2, t1.terminal);
   });
 });

@@ -46,26 +46,26 @@ suite('CommandProcess', () => {
     proc.dispose();
   });
 
-  test('start changes status to running', () => {
+  test('start changes status to running', async () => {
     const proc = createProcess('Server');
-    proc.start();
+    await proc.start();
     assert.strictEqual(proc.status, CommandStatus.Running);
     proc.dispose();
   });
 
-  test('start is a no-op when already running', () => {
+  test('start is a no-op when already running', async () => {
     const proc = createProcess('Server');
     let statusChanges = 0;
     proc.onStatusChanged(() => statusChanges++);
-    proc.start();
-    proc.start();
+    await proc.start();
+    await proc.start();
     assert.strictEqual(statusChanges, 1);
     proc.dispose();
   });
 
-  test('stop changes status to stopped', () => {
+  test('stop changes status to stopped', async () => {
     const proc = createProcess('Server');
-    proc.start();
+    await proc.start();
     proc.stop();
     assert.strictEqual(proc.status, CommandStatus.Stopped);
     proc.dispose();
@@ -80,12 +80,12 @@ suite('CommandProcess', () => {
     proc.dispose();
   });
 
-  test('restart cycles through stop and start', () => {
+  test('restart cycles through stop and start', async () => {
     const proc = createProcess('Server');
     const statuses = [];
     proc.onStatusChanged(status => statuses.push(status));
-    proc.start();
-    proc.restart();
+    await proc.start();
+    await proc.restart();
     assert.strictEqual(statuses.length, 3);
     assert.strictEqual(statuses[0], CommandStatus.Running);
     assert.strictEqual(statuses[1], CommandStatus.Stopped);
@@ -93,28 +93,28 @@ suite('CommandProcess', () => {
     proc.dispose();
   });
 
-  test('updateConfig changes the config', () => {
+  test('updateConfig changes the config', async () => {
     const proc = createProcess('Server');
     const newConfig = makeConfig({ command: 'npm run dev' });
     proc.updateConfig(newConfig);
-    proc.start();
+    await proc.start();
     proc.dispose();
   });
 
-  test('onStatusChanged fires on status change', () => {
+  test('onStatusChanged fires on status change', async () => {
     const proc = createProcess('Server');
     const events = [];
     proc.onStatusChanged(status => events.push(status));
-    proc.start();
+    await proc.start();
     assert.deepStrictEqual(events, [CommandStatus.Running]);
     proc.stop();
     assert.deepStrictEqual(events, [CommandStatus.Running, CommandStatus.Stopped]);
     proc.dispose();
   });
 
-  test('dispose cleans up without errors', () => {
+  test('dispose cleans up without errors', async () => {
     const proc = createProcess('Server');
-    proc.start();
+    await proc.start();
     proc.dispose();
   });
 

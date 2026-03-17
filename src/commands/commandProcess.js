@@ -11,10 +11,10 @@ class CommandProcess {
     this._workspaceRoot = workspaceRoot;
     this._status = CommandStatus.Stopped;
     this._terminal = undefined;
+    this._closeListener = undefined;
     this._restartPolicy = new AutoRestartPolicy();
     this._restartTimer = undefined;
     this._manualStop = false;
-    this._closeListener = undefined;
     this._onStatusChanged = new vscode.EventEmitter();
     this.onStatusChanged = this._onStatusChanged.event;
   }
@@ -35,32 +35,14 @@ class CommandProcess {
     this._config = config;
   }
 
-  start() {
+  async start() {
     if (this._status === CommandStatus.Running) {
       return;
     }
 
     this._manualStop = false;
     this._restartPolicy.reset();
-
-    const cwd = this._config.cwd
-      ? path.resolve(this._workspaceRoot, this._config.cwd)
-      : this._workspaceRoot;
-
-    this._terminal = this._terminalManager.getOrCreate(this.name, cwd, this._config.env);
-    this._terminal.create();
-
-    this._closeListener?.dispose();
-    this._closeListener = this._terminal.onDidClose(exitCode => {
-      this._handleExit(exitCode);
-    });
-
-    if (this._config.interactive) {
-      this._terminal.sendText(this._config.command);
-    } else {
-      this._terminal.sendText(`exec ${this._config.command}`);
-    }
-
+    await this._createAndRun();
     this._setStatus(CommandStatus.Running);
   }
 
@@ -80,9 +62,9 @@ class CommandProcess {
     this._setStatus(CommandStatus.Stopped);
   }
 
-  restart() {
+  async restart() {
     this.stop();
-    this.start();
+    await this.start();
   }
 
   clear() {
@@ -91,6 +73,49 @@ class CommandProcess {
 
   showTerminal() {
     this._terminal?.show();
+  }
+
+  async _createAndRun() {
+    const cwd = this._config.cwd
+      ? path.resolve(this._workspaceRoot, this._config.cwd)
+      : this._workspaceRoot;
+
+    const { terminal, splitFrom } = this._terminalManager.getOrCreate(this.name, cwd, this._config.env);
+    this._terminal = terminal;
+    await this._terminal.create(splitFrom);
+
+    this._closeListener?.dispose();
+    this._closeListener = this._terminal.onDidClose(exitCode => {
+      this._handleExit(exitCode);
+    });
+
+    if (splitFrom) {
+      // Split terminals inherit the parent's shell — set up env, cwd, then run.
+      // Use clear + title escape to keep output clean.
+      const parts = [`printf '\\033]0;Spinup: ${this.name}\\007'`];
+      if (this._config.env) {
+        for (const [key, value] of Object.entries(this._config.env)) {
+          parts.push(`export ${key}=${this._shellEscape(value)}`);
+        }
+      }
+      parts.push(`cd ${this._shellEscape(cwd)}`, 'clear');
+      if (this._config.interactive) {
+        parts.push(this._config.command);
+      } else {
+        parts.push(`exec ${this._config.command}`);
+      }
+      this._terminal.sendText(parts.join(' && '));
+    } else {
+      if (this._config.interactive) {
+        this._terminal.sendText(this._config.command);
+      } else {
+        this._terminal.sendText(`exec ${this._config.command}`);
+      }
+    }
+  }
+
+  _shellEscape(str) {
+    return `'${String(str).replace(/'/g, "'\\''")}'`;
   }
 
   _handleExit(exitCode) {
@@ -119,25 +144,8 @@ class CommandProcess {
     }
   }
 
-  _doRestart() {
-    const cwd = this._config.cwd
-      ? path.resolve(this._workspaceRoot, this._config.cwd)
-      : this._workspaceRoot;
-
-    this._terminal = this._terminalManager.getOrCreate(this.name, cwd, this._config.env);
-    this._terminal.create();
-
-    this._closeListener?.dispose();
-    this._closeListener = this._terminal.onDidClose(exitCode => {
-      this._handleExit(exitCode);
-    });
-
-    if (this._config.interactive) {
-      this._terminal.sendText(this._config.command);
-    } else {
-      this._terminal.sendText(`exec ${this._config.command}`);
-    }
-
+  async _doRestart() {
+    await this._createAndRun();
     this._setStatus(CommandStatus.Running);
   }
 

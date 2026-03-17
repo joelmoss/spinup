@@ -18,30 +18,30 @@ suite('SpinupTerminal', () => {
     assert.strictEqual(terminal.isOpen, false);
   });
 
-  test('isOpen is true after create', () => {
+  test('isOpen is true after create', async () => {
     terminal = new SpinupTerminal('Server', '/tmp', undefined);
-    terminal.create();
+    await terminal.create();
     assert.strictEqual(terminal.isOpen, true);
   });
 
-  test('create is idempotent', () => {
+  test('create is idempotent', async () => {
     terminal = new SpinupTerminal('Server', '/tmp', undefined);
-    terminal.create();
-    terminal.create();
+    await terminal.create();
+    await terminal.create();
     assert.strictEqual(terminal.isOpen, true);
   });
 
-  test('dispose sets isOpen to false', () => {
+  test('dispose sets isOpen to false', async () => {
     terminal = new SpinupTerminal('Server', '/tmp', undefined);
-    terminal.create();
+    await terminal.create();
     terminal.dispose();
     assert.strictEqual(terminal.isOpen, false);
   });
 
-  test('sendText creates terminal if not open', () => {
+  test('sendText creates terminal if not open', async () => {
     terminal = new SpinupTerminal('Server', '/tmp', undefined);
     assert.strictEqual(terminal.isOpen, false);
-    terminal.sendText('echo hello');
+    await terminal.sendText('echo hello');
     assert.strictEqual(terminal.isOpen, true);
   });
 
@@ -50,9 +50,9 @@ suite('SpinupTerminal', () => {
     terminal.show();
   });
 
-  test('show does not throw when terminal exists', () => {
+  test('show does not throw when terminal exists', async () => {
     terminal = new SpinupTerminal('Server', '/tmp', undefined);
-    terminal.create();
+    await terminal.create();
     terminal.show();
   });
 
@@ -61,9 +61,9 @@ suite('SpinupTerminal', () => {
     terminal.clear();
   });
 
-  test('clear does not throw when terminal exists', () => {
+  test('clear does not throw when terminal exists', async () => {
     terminal = new SpinupTerminal('Server', '/tmp', undefined);
-    terminal.create();
+    await terminal.create();
     terminal.clear();
   });
 
@@ -75,5 +75,17 @@ suite('SpinupTerminal', () => {
   test('constructor accepts undefined cwd and env', () => {
     terminal = new SpinupTerminal('Server', undefined, undefined);
     assert.strictEqual(terminal.name, 'Server');
+  });
+
+  test('terminal getter returns undefined before create', () => {
+    terminal = new SpinupTerminal('Server', '/tmp', undefined);
+    assert.strictEqual(terminal.terminal, undefined);
+  });
+
+  test('terminal getter returns vscode.Terminal after create', async () => {
+    terminal = new SpinupTerminal('Server', '/tmp', undefined);
+    await terminal.create();
+    assert.ok(terminal.terminal);
+    assert.strictEqual(typeof terminal.terminal.sendText, 'function');
   });
 });

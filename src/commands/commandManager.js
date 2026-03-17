@@ -20,14 +20,14 @@ class CommandManager {
 
     for (const [name, cmdConfig] of Object.entries(config.commands)) {
       if (cmdConfig.autostart) {
-        this._processes.get(name).start();
+        await this._processes.get(name).start();
       }
     }
 
     this._onDidChange.fire();
   }
 
-  reconcile(newConfig) {
+  async reconcile(newConfig) {
     const newNames = new Set(Object.keys(newConfig.commands));
     const oldNames = new Set(this._processes.keys());
 
@@ -46,7 +46,7 @@ class CommandManager {
         process.onStatusChanged(() => this._onDidChange.fire());
         this._processes.set(name, process);
         if (cmdConfig.autostart) {
-          process.start();
+          await process.start();
         }
       } else {
         this._processes.get(name).updateConfig(cmdConfig);
@@ -71,10 +71,10 @@ class CommandManager {
     return states;
   }
 
-  startAll() {
+  async startAll() {
     for (const process of this._processes.values()) {
       if (process.status !== CommandStatus.Running) {
-        process.start();
+        await process.start();
       }
     }
   }
@@ -85,22 +85,22 @@ class CommandManager {
     }
   }
 
-  restartAll() {
+  async restartAll() {
     for (const process of this._processes.values()) {
-      process.restart();
+      await process.restart();
     }
   }
 
-  start(name) {
-    this._processes.get(name)?.start();
+  async start(name) {
+    await this._processes.get(name)?.start();
   }
 
   stop(name) {
     this._processes.get(name)?.stop();
   }
 
-  restart(name) {
-    this._processes.get(name)?.restart();
+  async restart(name) {
+    await this._processes.get(name)?.restart();
   }
 
   clear(name) {
