@@ -1,0 +1,201 @@
+{
+  "name": "spinup",
+  "displayName": "Spinup",
+  "description": "Define and manage multiple concurrent processes from a sidebar via spinup.yml",
+  "version": "0.1.0",
+  "publisher": "joelmoss",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "workspaceContains:spinup.yml",
+    "workspaceContains:spinup.json"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "spinup",
+          "title": "Spinup",
+          "icon": "resources/icons/spinup.svg"
+        }
+      ]
+    },
+    "views": {
+      "spinup": [
+        {
+          "id": "spinupCommands",
+          "name": "Commands",
+          "icon": "$(terminal)"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "spinup.startAll",
+        "title": "Start All",
+        "category": "Spinup",
+        "icon": "$(play)"
+      },
+      {
+        "command": "spinup.stopAll",
+        "title": "Stop All",
+        "category": "Spinup",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "spinup.restartAll",
+        "title": "Restart All",
+        "category": "Spinup",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "spinup.start",
+        "title": "Start",
+        "category": "Spinup",
+        "icon": "$(play)"
+      },
+      {
+        "command": "spinup.stop",
+        "title": "Stop",
+        "category": "Spinup",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "spinup.restart",
+        "title": "Restart",
+        "category": "Spinup",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "spinup.clear",
+        "title": "Clear Terminal",
+        "category": "Spinup"
+      },
+      {
+        "command": "spinup.openTerminal",
+        "title": "Show Terminal",
+        "category": "Spinup",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "spinup.reloadConfig",
+        "title": "Reload Configuration",
+        "category": "Spinup",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "spinup.startAll",
+          "when": "view == spinupCommands",
+          "group": "navigation@1"
+        },
+        {
+          "command": "spinup.stopAll",
+          "when": "view == spinupCommands",
+          "group": "navigation@2"
+        },
+        {
+          "command": "spinup.restartAll",
+          "when": "view == spinupCommands",
+          "group": "navigation@3"
+        },
+        {
+          "command": "spinup.reloadConfig",
+          "when": "view == spinupCommands",
+          "group": "navigation@4"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "spinup.start",
+          "when": "view == spinupCommands && viewItem == stopped || view == spinupCommands && viewItem == errored",
+          "group": "inline@1"
+        },
+        {
+          "command": "spinup.stop",
+          "when": "view == spinupCommands && viewItem == running",
+          "group": "inline@1"
+        },
+        {
+          "command": "spinup.restart",
+          "when": "view == spinupCommands && viewItem == running",
+          "group": "inline@2"
+        },
+        {
+          "command": "spinup.openTerminal",
+          "when": "view == spinupCommands && viewItem == running",
+          "group": "inline@3"
+        },
+        {
+          "command": "spinup.start",
+          "when": "view == spinupCommands && viewItem == stopped || view == spinupCommands && viewItem == errored",
+          "group": "command@1"
+        },
+        {
+          "command": "spinup.stop",
+          "when": "view == spinupCommands && viewItem == running",
+          "group": "command@1"
+        },
+        {
+          "command": "spinup.restart",
+          "when": "view == spinupCommands && viewItem == running",
+          "group": "command@2"
+        },
+        {
+          "command": "spinup.clear",
+          "when": "view == spinupCommands",
+          "group": "command@3"
+        },
+        {
+          "command": "spinup.openTerminal",
+          "when": "view == spinupCommands",
+          "group": "command@4"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "spinup.startAll",
+        "key": "cmd+shift+s",
+        "when": "view == spinupCommands"
+      },
+      {
+        "command": "spinup.stopAll",
+        "key": "cmd+shift+q",
+        "when": "view == spinupCommands"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "spinup.json",
+        "url": "./spinup.schema.json"
+      }
+    ],
+    "yamlValidation": [
+      {
+        "fileMatch": "spinup.yml",
+        "url": "./spinup.schema.json"
+      }
+    ]
+  },
+  "scripts": {
+    "lint": "eslint src --ext js",
+    "test": "node ./src/test/runTests.js"
+  },
+  "dependencies": {
+    "ajv": "^8.12.0",
+    "yaml": "^2.3.4"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.3"
+  },
+  "devDependencies": {
+    "@vscode/test-electron": "^2.3.8",
+    "mocha": "^10.2.0"
+  }
+}

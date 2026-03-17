@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Spinup Configuration",
+  "type": "object",
+  "required": ["commands"],
+  "additionalProperties": false,
+  "properties": {
+    "commands": {
+      "type": "object",
+      "description": "Map of command names to their configuration",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["command"],
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The shell command to execute"
+          },
+          "autostart": {
+            "type": "boolean",
+            "description": "Whether to start this command automatically on activation (defaults to true)"
+          },
+          "autoRestart": {
+            "type": "boolean",
+            "description": "Whether to restart this command on crash with exponential backoff (defaults to false)"
+          },
+          "interactive": {
+            "type": "boolean",
+            "description": "Whether this command requires interactive terminal input (defaults to false)"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory relative to workspace root"
+          },
+          "env": {
+            "type": "object",
+            "description": "Environment variables for this command",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "watch": {
+            "type": "array",
+            "description": "Glob patterns of files to watch — restarts command on change",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
