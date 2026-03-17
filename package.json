@@ -4,10 +4,16 @@
   "description": "Define and manage multiple concurrent processes from a sidebar via spinup.yml",
   "version": "0.1.0",
   "publisher": "joelmoss",
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/joelmoss/spinup"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "activationEvents": [
     "workspaceContains:spinup.yml",
     "workspaceContains:spinup.json"
