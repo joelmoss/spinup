@@ -28,14 +28,49 @@ function activate(context) {
   const reg = (id, handler) =>
     context.subscriptions.push(vscode.commands.registerCommand(id, handler));
 
+  // Resolve the command name from either a tree item argument (context menu / inline button)
+  // or the focused list item (keybinding). Keybindings don't pass the tree item, so we
+  // run list.select first to promote focus → selection, then read treeView.selection.
+  async function nameFromFocused(item) {
+    if (item?.state?.name) {
+      return item.state.name;
+    }
+    await vscode.commands.executeCommand('list.select');
+    return treeView.selection[0]?.state?.name;
+  }
+
   reg('spinup.startAll', () => commandManager.startAll());
   reg('spinup.stopAll', () => commandManager.stopAll());
   reg('spinup.restartAll', () => commandManager.restartAll());
-  reg('spinup.start', (item) => commandManager.start(item.state.name));
-  reg('spinup.stop', (item) => commandManager.stop(item.state.name));
-  reg('spinup.restart', (item) => commandManager.restart(item.state.name));
-  reg('spinup.clear', (item) => commandManager.clear(item.state.name));
-  reg('spinup.openTerminal', (item) => commandManager.showTerminal(item.state.name));
+  reg('spinup.start', async (item) => commandManager.start(await nameFromFocused(item)));
+  reg('spinup.stop', async (item) => commandManager.stop(await nameFromFocused(item)));
+  reg('spinup.restart', async (item) => {
+    const name = await nameFromFocused(item);
+    if (name) {
+      await commandManager.restart(name);
+      await vscode.commands.executeCommand('spinupCommands.focus');
+    }
+  });
+  reg('spinup.clear', async (item) => commandManager.clear(await nameFromFocused(item)));
+  reg('spinup.openTerminal', async (item) => commandManager.showTerminal(await nameFromFocused(item)));
+  reg('spinup.toggleStartStop', async (item) => {
+    const name = await nameFromFocused(item);
+    if (name) {
+      commandManager.isRunning(name) ? commandManager.stop(name) : await commandManager.start(name);
+      await vscode.commands.executeCommand('spinupCommands.focus');
+    }
+  });
+  reg('spinup.startOrShowTerminal', async (item) => {
+    const name = await nameFromFocused(item);
+    if (name) {
+      if (commandManager.isRunning(name)) {
+        commandManager.showTerminal(name);
+      } else {
+        await commandManager.start(name);
+        commandManager.showTerminal(name);
+      }
+    }
+  });
   reg('spinup.openSettings', () =>
     vscode.commands.executeCommand('workbench.action.openSettings', 'spinup.commands'),
   );

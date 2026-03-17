@@ -113,16 +113,16 @@ suite('CommandManager', () => {
     assert.strictEqual(states[0].config.command, 'npm run dev');
   });
 
-  test('getStates sorts running before stopped', async () => {
+  test('getStates preserves config order', async () => {
     const config = makeConfig({
+      Zulu: { command: 'zulu', autostart: false },
       Alpha: { command: 'alpha', autostart: false },
-      Beta: { command: 'beta', autostart: false },
+      Mike: { command: 'mike', autostart: false },
     });
     await manager.initialize(config);
 
-    const states = manager.getStates();
-    assert.strictEqual(states.length, 2);
-    states.forEach(s => assert.strictEqual(s.status, CommandStatus.Stopped));
+    const names = manager.getStates().map(s => s.name);
+    assert.deepStrictEqual(names, ['Zulu', 'Alpha', 'Mike']);
   });
 
   test('start/stop individual commands by name', async () => {

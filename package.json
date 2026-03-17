@@ -88,6 +88,16 @@
         "title": "Show Terminal",
         "category": "Spinup",
         "icon": "$(terminal)"
+      },
+      {
+        "command": "spinup.toggleStartStop",
+        "title": "Toggle Start/Stop",
+        "category": "Spinup"
+      },
+      {
+        "command": "spinup.startOrShowTerminal",
+        "title": "Start or Show Terminal",
+        "category": "Spinup"
       }
     ],
     "menus": {
@@ -166,6 +176,21 @@
         "command": "spinup.stopAll",
         "key": "cmd+shift+q",
         "when": "view == spinupCommands"
+      },
+      {
+        "command": "spinup.toggleStartStop",
+        "key": "s",
+        "when": "focusedView == spinupCommands && listFocus"
+      },
+      {
+        "command": "spinup.restart",
+        "key": "r",
+        "when": "focusedView == spinupCommands && listFocus"
+      },
+      {
+        "command": "spinup.startOrShowTerminal",
+        "key": "enter",
+        "when": "focusedView == spinupCommands && listFocus"
       }
     ],
     "configuration": {

@@ -66,8 +66,6 @@ class CommandManager {
         restartCount: process.restartCount,
       });
     }
-    const order = { [CommandStatus.Running]: 0, [CommandStatus.Errored]: 1, [CommandStatus.Stopped]: 2 };
-    states.sort((a, b) => order[a.status] - order[b.status]);
     return states;
   }
 
@@ -109,6 +107,10 @@ class CommandManager {
 
   showTerminal(name) {
     this._processes.get(name)?.showTerminal();
+  }
+
+  isRunning(name) {
+    return this._processes.get(name)?.status === CommandStatus.Running;
   }
 
   get runningCount() {
