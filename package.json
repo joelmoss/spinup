@@ -17,21 +17,11 @@
   "activationEvents": [],
   "main": "./src/extension.js",
   "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "spinup",
-          "title": "Spinup",
-          "icon": "resources/icons/spinup.svg"
-        }
-      ]
-    },
     "views": {
-      "spinup": [
+      "explorer": [
         {
           "id": "spinupCommands",
-          "name": "Commands",
-          "icon": "$(terminal)"
+          "name": "Spinup"
         }
       ]
     },
