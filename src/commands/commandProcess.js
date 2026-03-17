@@ -12,6 +12,7 @@ class CommandProcess {
     this._status = CommandStatus.Stopped;
     this._terminal = undefined;
     this._closeListener = undefined;
+    this._shellExecListener = undefined;
     this._restartPolicy = new AutoRestartPolicy();
     this._restartTimer = undefined;
     this._manualStop = false;
@@ -67,6 +68,8 @@ class CommandProcess {
     if (this._terminal) {
       this._closeListener?.dispose();
       this._closeListener = undefined;
+      this._shellExecListener?.dispose();
+      this._shellExecListener = undefined;
       this._terminal.dispose();
       this._terminalManager.remove(this.name);
       this._terminal = undefined;
@@ -102,9 +105,24 @@ class CommandProcess {
       this._handleExit(exitCode);
     });
 
+    // Listen for shell integration command completion to detect errors
+    // when the terminal stays open.
+    this._shellExecListener?.dispose();
+    this._shellExecListener = vscode.window.onDidEndTerminalShellExecution(event => {
+      if (event.terminal === this._terminal?.terminal && event.exitCode !== 0) {
+        this._handleExit(event.exitCode);
+      }
+    });
+
+    const cmd = this._config.command;
+    // Non-interactive commands: keep shell open on failure so error output is visible.
+    // On success, exit the shell so onDidCloseTerminal fires.
+    const wrapped = this._config.interactive
+      ? cmd
+      : `${cmd}; __e=$?; if [ $__e -ne 0 ]; then echo "\\n\\033[31mProcess exited with code $__e\\033[0m"; else exit 0; fi`;
+
     if (splitFrom) {
       // Split terminals inherit the parent's shell — set up env, cwd, then run.
-      // Use clear + title escape to keep output clean.
       const parts = [`printf '\\033]0;Spinup: ${this.name}\\007'`];
       if (this._config.env) {
         for (const [key, value] of Object.entries(this._config.env)) {
@@ -112,18 +130,10 @@ class CommandProcess {
         }
       }
       parts.push(`cd ${this._shellEscape(cwd)}`, 'clear');
-      if (this._config.interactive) {
-        parts.push(this._config.command);
-      } else {
-        parts.push(`exec ${this._config.command}`);
-      }
+      parts.push(wrapped);
       this._terminal.sendText(parts.join(' && '));
     } else {
-      if (this._config.interactive) {
-        this._terminal.sendText(this._config.command);
-      } else {
-        this._terminal.sendText(`exec ${this._config.command}`);
-      }
+      this._terminal.sendText(wrapped);
     }
   }
 
@@ -132,27 +142,35 @@ class CommandProcess {
   }
 
   _handleExit(exitCode) {
-    this._terminal = undefined;
-    this._closeListener?.dispose();
-    this._closeListener = undefined;
-
-    if (this._manualStop) {
+    if (this._manualStop || this._status === CommandStatus.Errored) {
       return;
     }
 
+    this._shellExecListener?.dispose();
+    this._shellExecListener = undefined;
+
     const crashed = exitCode !== undefined && exitCode !== 0;
 
-    if (crashed && this._config.autoRestart && this._restartPolicy.canRestart) {
-      this._setStatus(CommandStatus.Errored);
-      const delay = this._restartPolicy.currentDelay;
-      this._restartPolicy.recordRestart();
+    if (crashed) {
+      // Keep terminal open so error output is visible
+      this._terminal?.show();
+      this._closeListener?.dispose();
+      this._closeListener = undefined;
+      if (this._config.autoRestart && this._restartPolicy.canRestart) {
+        this._setStatus(CommandStatus.Errored);
+        const delay = this._restartPolicy.currentDelay;
+        this._restartPolicy.recordRestart();
 
-      this._restartTimer = setTimeout(() => {
-        this._doRestart();
-      }, delay);
-    } else if (crashed) {
-      this._setStatus(CommandStatus.Errored);
+        this._restartTimer = setTimeout(() => {
+          this._doRestart();
+        }, delay);
+      } else {
+        this._setStatus(CommandStatus.Errored);
+      }
     } else {
+      this._terminal = undefined;
+      this._closeListener?.dispose();
+      this._closeListener = undefined;
       this._setStatus(CommandStatus.Stopped);
     }
   }
@@ -179,6 +197,7 @@ class CommandProcess {
   dispose() {
     this._clearRestartTimer();
     this._closeListener?.dispose();
+    this._shellExecListener?.dispose();
     if (this._terminal) {
       this._terminal.dispose();
       this._terminalManager.remove(this.name);
