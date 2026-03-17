@@ -1,12 +1,16 @@
 const vscode = require('vscode');
 const { CommandStatus } = require('../types');
 const { CommandProcess } = require('./commandProcess');
+const { getMetrics } = require('../metrics/processMetrics');
+
+const METRICS_INTERVAL = 3000;
 
 class CommandManager {
   constructor(terminalManager, workspaceRoot) {
     this._terminalManager = terminalManager;
     this._workspaceRoot = workspaceRoot;
     this._processes = new Map();
+    this._metricsTimer = undefined;
     this._onDidChange = new vscode.EventEmitter();
     this.onDidChange = this._onDidChange.event;
   }
@@ -14,7 +18,10 @@ class CommandManager {
   async initialize(config) {
     for (const [name, cmdConfig] of Object.entries(config.commands)) {
       const process = new CommandProcess(name, cmdConfig, this._terminalManager, this._workspaceRoot);
-      process.onStatusChanged(() => this._onDidChange.fire());
+      process.onStatusChanged(() => {
+        this._onDidChange.fire();
+        this._updateMetricsTimer();
+      });
       this._processes.set(name, process);
     }
 
@@ -25,6 +32,7 @@ class CommandManager {
     }
 
     this._onDidChange.fire();
+    this._updateMetricsTimer();
   }
 
   async reconcile(newConfig) {
@@ -43,7 +51,10 @@ class CommandManager {
     for (const [name, cmdConfig] of Object.entries(newConfig.commands)) {
       if (!oldNames.has(name)) {
         const process = new CommandProcess(name, cmdConfig, this._terminalManager, this._workspaceRoot);
-        process.onStatusChanged(() => this._onDidChange.fire());
+        process.onStatusChanged(() => {
+          this._onDidChange.fire();
+          this._updateMetricsTimer();
+        });
         this._processes.set(name, process);
         if (cmdConfig.autostart) {
           await process.start();
@@ -54,6 +65,7 @@ class CommandManager {
     }
 
     this._onDidChange.fire();
+    this._updateMetricsTimer();
   }
 
   getStates() {
@@ -64,6 +76,7 @@ class CommandManager {
         config: process.config,
         status: process.status,
         restartCount: process.restartCount,
+        metrics: process.metrics,
       });
     }
     return states;
@@ -127,7 +140,42 @@ class CommandManager {
     return this._processes.size;
   }
 
+  _updateMetricsTimer() {
+    const hasRunning = this.runningCount > 0;
+    if (hasRunning && !this._metricsTimer) {
+      this._refreshMetrics();
+      this._metricsTimer = setInterval(() => this._refreshMetrics(), METRICS_INTERVAL);
+    } else if (!hasRunning && this._metricsTimer) {
+      clearInterval(this._metricsTimer);
+      this._metricsTimer = undefined;
+    }
+  }
+
+  async _refreshMetrics() {
+    let changed = false;
+    for (const process of this._processes.values()) {
+      if (process.status === CommandStatus.Running) {
+        const pid = await process.processId;
+        if (pid) {
+          const metrics = await getMetrics(pid);
+          process.metrics = metrics;
+          changed = true;
+        }
+      } else if (process.metrics) {
+        process.metrics = null;
+        changed = true;
+      }
+    }
+    if (changed) {
+      this._onDidChange.fire();
+    }
+  }
+
   dispose() {
+    if (this._metricsTimer) {
+      clearInterval(this._metricsTimer);
+      this._metricsTimer = undefined;
+    }
     for (const process of this._processes.values()) {
       process.stop();
       process.dispose();

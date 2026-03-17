@@ -15,6 +15,7 @@ class CommandProcess {
     this._restartPolicy = new AutoRestartPolicy();
     this._restartTimer = undefined;
     this._manualStop = false;
+    this._metrics = null;
     this._onStatusChanged = new vscode.EventEmitter();
     this.onStatusChanged = this._onStatusChanged.event;
   }
@@ -29,6 +30,18 @@ class CommandProcess {
 
   get restartCount() {
     return this._restartPolicy.attempts;
+  }
+
+  get metrics() {
+    return this._metrics;
+  }
+
+  set metrics(value) {
+    this._metrics = value;
+  }
+
+  get processId() {
+    return this._terminal?.processId;
   }
 
   updateConfig(config) {

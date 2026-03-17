@@ -36,14 +36,22 @@ suite('CommandTreeItem', () => {
     }
   });
 
-  test('description is "running" when running', () => {
+  test('description is empty when running without metrics', () => {
     const item = new CommandTreeItem(makeState({ status: CommandStatus.Running }));
-    assert.strictEqual(item.description, 'running');
+    assert.strictEqual(item.description, '');
   });
 
-  test('description is "stopped" when stopped', () => {
+  test('description shows CPU and RAM when metrics available', () => {
+    const item = new CommandTreeItem(makeState({
+      status: CommandStatus.Running,
+      metrics: { cpu: 12.5, mem: 64.3 },
+    }));
+    assert.strictEqual(item.description, '12.5% CPU, 64.3 MB');
+  });
+
+  test('description is empty when stopped', () => {
     const item = new CommandTreeItem(makeState({ status: CommandStatus.Stopped }));
-    assert.strictEqual(item.description, 'stopped');
+    assert.strictEqual(item.description, '');
   });
 
   test('description is "errored" when errored with no restarts', () => {

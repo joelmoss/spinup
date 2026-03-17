@@ -19,6 +19,10 @@ class SpinupTerminal {
     return this._terminal;
   }
 
+  get processId() {
+    return this._terminal?.processId;
+  }
+
   async create(splitFrom) {
     if (this._terminal) {
       return;

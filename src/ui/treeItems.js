@@ -22,14 +22,19 @@ class CommandTreeItem extends vscode.TreeItem {
 
   _getDescription() {
     switch (this.state.status) {
-      case CommandStatus.Running:
-        return 'running';
+      case CommandStatus.Running: {
+        const m = this.state.metrics;
+        if (m) {
+          return `${m.cpu}% CPU, ${m.mem} MB`;
+        }
+        return '';
+      }
       case CommandStatus.Errored:
         return this.state.restartCount > 0
           ? `errored (restart ${this.state.restartCount})`
           : 'errored';
       case CommandStatus.Stopped:
-        return 'stopped';
+        return '';
     }
   }
 
