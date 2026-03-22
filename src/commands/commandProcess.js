@@ -106,13 +106,16 @@ class CommandProcess {
     });
 
     // Listen for shell integration command completion to detect errors
-    // when the terminal stays open.
+    // when the terminal stays open (non-interactive only).
     this._shellExecListener?.dispose();
-    this._shellExecListener = vscode.window.onDidEndTerminalShellExecution(event => {
-      if (event.terminal === this._terminal?.terminal && event.exitCode !== 0) {
-        this._handleExit(event.exitCode);
-      }
-    });
+    this._shellExecListener = undefined;
+    if (!this._config.interactive) {
+      this._shellExecListener = vscode.window.onDidEndTerminalShellExecution(event => {
+        if (event.terminal === this._terminal?.terminal && event.exitCode !== 0) {
+          this._handleExit(event.exitCode);
+        }
+      });
+    }
 
     const cmd = this._config.command;
     // Non-interactive commands: keep shell open on failure so error output is visible.
@@ -154,8 +157,14 @@ class CommandProcess {
     if (crashed) {
       // Keep terminal open so error output is visible
       this._terminal?.show();
+      // Re-attach close listener so we can clean up if the user closes the terminal
       this._closeListener?.dispose();
-      this._closeListener = undefined;
+      this._closeListener = this._terminal?.onDidClose(() => {
+        this._terminal = undefined;
+        this._closeListener?.dispose();
+        this._closeListener = undefined;
+        this._setStatus(CommandStatus.Stopped);
+      });
       if (this._config.autoRestart && this._restartPolicy.canRestart) {
         this._setStatus(CommandStatus.Errored);
         const delay = this._restartPolicy.currentDelay;
@@ -176,8 +185,8 @@ class CommandProcess {
   }
 
   async _doRestart() {
-    await this._createAndRun();
     this._setStatus(CommandStatus.Running);
+    await this._createAndRun();
   }
 
   _clearRestartTimer() {
