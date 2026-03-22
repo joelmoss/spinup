@@ -12,7 +12,7 @@ class CommandProcess {
     this._status = CommandStatus.Stopped;
     this._terminal = undefined;
     this._closeListener = undefined;
-    this._shellExecListener = undefined;
+    this._shellExecSubscription = undefined;
     this._restartPolicy = new AutoRestartPolicy();
     this._restartTimer = undefined;
     this._manualStop = false;
@@ -68,8 +68,8 @@ class CommandProcess {
     if (this._terminal) {
       this._closeListener?.dispose();
       this._closeListener = undefined;
-      this._shellExecListener?.dispose();
-      this._shellExecListener = undefined;
+      this._shellExecSubscription?.dispose();
+      this._shellExecSubscription = undefined;
       this._terminal.dispose();
       this._terminalManager.remove(this.name);
       this._terminal = undefined;
@@ -107,10 +107,10 @@ class CommandProcess {
 
     // Listen for shell integration command completion to detect errors
     // when the terminal stays open (non-interactive only).
-    this._shellExecListener?.dispose();
-    this._shellExecListener = undefined;
+    this._shellExecSubscription?.dispose();
+    this._shellExecSubscription = undefined;
     if (!this._config.interactive) {
-      this._shellExecListener = this._terminal.onDidShellExecEnd(exitCode => {
+      this._shellExecSubscription = this._terminal.onDidShellExecEnd(exitCode => {
         if (exitCode !== 0) {
           this._handleExit(exitCode);
         }
@@ -145,12 +145,12 @@ class CommandProcess {
   }
 
   _handleExit(exitCode) {
-    if (this._manualStop || this._status === CommandStatus.Errored) {
+    if (this._manualStop || this._status !== CommandStatus.Running) {
       return;
     }
 
-    this._shellExecListener?.dispose();
-    this._shellExecListener = undefined;
+    this._shellExecSubscription?.dispose();
+    this._shellExecSubscription = undefined;
 
     const crashed = exitCode !== undefined && exitCode !== 0;
 
@@ -160,9 +160,11 @@ class CommandProcess {
       // Re-attach close listener so we can clean up if the user closes the terminal
       this._closeListener?.dispose();
       this._closeListener = this._terminal?.onDidClose(() => {
+        this._clearRestartTimer();
         this._terminal = undefined;
         this._closeListener?.dispose();
         this._closeListener = undefined;
+        this._shellExecSubscription = undefined;
         this._setStatus(CommandStatus.Stopped);
       });
       if (this._config.autoRestart && this._restartPolicy.canRestart) {
@@ -206,7 +208,7 @@ class CommandProcess {
   dispose() {
     this._clearRestartTimer();
     this._closeListener?.dispose();
-    this._shellExecListener?.dispose();
+    this._shellExecSubscription?.dispose();
     if (this._terminal) {
       this._terminal.dispose();
       this._terminalManager.remove(this.name);
