@@ -7,9 +7,9 @@ const { DashboardServer } = require('./wsServer');
 const { ProjectRegistry } = require('./projectRegistry');
 const { NotificationManager } = require('./notifications');
 
-const PORT = 9500;
-const HOOK_PORT = 9501;
-const SERVER_INFO_DIR = path.join(os.homedir(), '.spinup-dashboard');
+const PREFERRED_PORT = 19500;
+const PREFERRED_HOOK_PORT = 19501;
+const SERVER_INFO_DIR = path.join(os.homedir(), '.spinup');
 const SERVER_INFO_PATH = path.join(SERVER_INFO_DIR, 'server.json');
 let windowStatePath = null;
 
@@ -18,7 +18,7 @@ let tray = null;
 let isQuitting = false;
 
 const registry = new ProjectRegistry();
-const server = new DashboardServer(registry, PORT);
+const server = new DashboardServer(registry, PREFERRED_PORT);
 const notifications = new NotificationManager({
   send: (n) => {
     if (Notification.isSupported()) {
@@ -68,7 +68,8 @@ function loadWindowState() {
 function saveWindowState() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const bounds = mainWindow.getBounds();
-  fs.mkdirSync(SERVER_INFO_DIR, { recursive: true });
+  const dir = path.dirname(getWindowStatePath());
+  fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(getWindowStatePath(), JSON.stringify(bounds));
 }
 
@@ -119,9 +120,9 @@ function createTray() {
   ]));
 }
 
-function writeServerInfo(port) {
+function writeServerInfo(port, hookPort) {
   fs.mkdirSync(SERVER_INFO_DIR, { recursive: true });
-  fs.writeFileSync(SERVER_INFO_PATH, JSON.stringify({ port, pid: process.pid }));
+  fs.writeFileSync(SERVER_INFO_PATH, JSON.stringify({ port, hookPort, pid: process.pid }));
 }
 
 function cleanupServerInfo() {
@@ -131,35 +132,45 @@ function cleanupServerInfo() {
 let hookServer = null;
 
 function startHookListener() {
-  hookServer = http.createServer((req, res) => {
-    if (req.url !== '/agent-event' || req.method !== 'POST') {
-      res.writeHead(req.method !== 'POST' && req.url === '/agent-event' ? 405 : 404);
-      res.end();
-      return;
-    }
-    let body = '';
-    req.on('data', (chunk) => { body += chunk; });
-    req.on('end', () => {
-      try {
-        const event = JSON.parse(body);
-        registry.handleAgentEvent(event);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end('{"ok":true}');
-      } catch {
-        res.writeHead(400);
-        res.end('{"error":"invalid json"}');
+  return new Promise((resolve) => {
+    hookServer = http.createServer((req, res) => {
+      if (req.url !== '/agent-event' || req.method !== 'POST') {
+        res.writeHead(req.method !== 'POST' && req.url === '/agent-event' ? 405 : 404);
+        res.end();
+        return;
       }
+      let body = '';
+      req.on('data', (chunk) => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const event = JSON.parse(body);
+          registry.handleAgentEvent(event);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end('{"ok":true}');
+        } catch {
+          res.writeHead(400);
+          res.end('{"error":"invalid json"}');
+        }
+      });
+    });
+
+    hookServer.listen(PREFERRED_HOOK_PORT, '127.0.0.1', () => {
+      resolve(hookServer.address().port);
+    });
+
+    hookServer.on('error', () => {
+      // Preferred port busy — use any available port
+      hookServer.listen(0, '127.0.0.1', () => {
+        resolve(hookServer.address().port);
+      });
     });
   });
-
-  hookServer.listen(HOOK_PORT, '127.0.0.1', () => {});
-  hookServer.on('error', () => {}); // port may be in use — non-fatal
 }
 
 app.whenReady().then(async () => {
   const actualPort = await server.start();
-  startHookListener();
-  writeServerInfo(actualPort);
+  const actualHookPort = await startHookListener();
+  writeServerInfo(actualPort, actualHookPort);
   createWindow();
   createTray();
 });

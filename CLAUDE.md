@@ -58,6 +58,11 @@ The `dashboard/` directory contains the Electron companion app (Spinup Dashboard
 ```bash
 cd dashboard && npm start    # Run the Electron dashboard app
 cd dashboard && npm test     # Run dashboard tests (Mocha TDD)
+# Run both: npm test && cd dashboard && npm test
 ```
 
-The extension bridge connects to the dashboard via WebSocket. Agent hooks report state via HTTP to the extension's AgentHookListener (port 9501).
+The extension bridge connects to the dashboard via WebSocket (preferred port 19500, dynamic fallback). The dashboard owns the agent hook listener (preferred port 19501, dynamic fallback) and routes events to projects by matching `cwd` against registered workspace paths. Both actual ports are written to `~/.spinup/server.json`.
+
+**Agent data flow:** Agent hooks (e.g., Claude Code) → HTTP POST to dashboard hook port → `ProjectRegistry.handleAgentEvent()` matches by cwd → updates project state. The extension does NOT handle agent events — only process/terminal state flows through the WebSocket bridge.
+
+**Key constraint:** Claude Code hooks must use `$CLAUDE_PROJECT_DIR` (not `$PWD`) for the cwd field — hook shells may not inherit the project working directory.

@@ -39,13 +39,13 @@ suite('AgentSetup', () => {
 
   test('generateConfig produces valid hook config for each agent', () => {
     for (const mod of allModules) {
-      const config = mod.getHookConfig(9501);
+      const config = mod.getHookConfig();
       assert.strictEqual(config.agent, mod.KIND);
       assert.ok(config.hooks.length > 0);
       for (const hook of config.hooks) {
         assert.ok(hook.event);
         assert.ok(hook.command);
-        assert.ok(hook.command.includes('localhost:9501'));
+        assert.ok(hook.command.includes('/agent-event'));
       }
     }
   });

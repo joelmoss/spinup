@@ -38,7 +38,7 @@ suite('Agent Modules', () => {
 
     test(`${name} exports getHookConfig function`, () => {
       assert.strictEqual(typeof mod.getHookConfig, 'function');
-      const config = mod.getHookConfig(9501);
+      const config = mod.getHookConfig();
       assert.ok(config, `${name}.getHookConfig() should return a config object`);
       assert.strictEqual(typeof config.agent, 'string');
     });

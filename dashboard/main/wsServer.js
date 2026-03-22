@@ -37,6 +37,13 @@ class DashboardServer {
       this._server.listen(this._port, '127.0.0.1', () => {
         resolve(this._server.address().port);
       });
+
+      this._server.on('error', () => {
+        // Preferred port busy — use any available port
+        this._server.listen(0, '127.0.0.1', () => {
+          resolve(this._server.address().port);
+        });
+      });
     });
   }
 

@@ -5,8 +5,9 @@ const EVENT_MAP = {
   'session_start': 'working',
   'stop': 'idle',
 };
-function getHookConfig(listenerPort) {
-  const baseUrl = `http://localhost:${listenerPort}/agent-event`;
+function getHookConfig() {
+  const portExpr = "$(grep -o '\"hookPort\":[0-9]*' ~/.spinup/server.json | grep -o '[0-9]*')";
+  const baseUrl = `http://localhost:${portExpr}/agent-event`;
   const common = `"agent":"${KIND}","pid":"$PPID","cwd":"$CLAUDE_PROJECT_DIR"`;
   return {
     agent: KIND,

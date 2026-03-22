@@ -14,7 +14,7 @@ const { FileWatcherManager } = require('./fileWatcher/fileWatcherManager');
 let lastValidConfig = null;
 
 function readDashboardPort() {
-  const serverInfoPath = path.join(os.homedir(), '.spinup-dashboard', 'server.json');
+  const serverInfoPath = path.join(os.homedir(), '.spinup', 'server.json');
   try {
     const info = JSON.parse(fs.readFileSync(serverInfoPath, 'utf8'));
     try {

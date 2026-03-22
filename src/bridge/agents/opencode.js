@@ -6,8 +6,9 @@ const EVENT_MAP = {
   'waiting': 'waiting_for_input',
 };
 
-function getHookConfig(listenerPort) {
-  const baseUrl = `http://localhost:${listenerPort}/agent-event`;
+function getHookConfig() {
+  const portExpr = "$(grep -o '\"hookPort\":[0-9]*' ~/.spinup/server.json | grep -o '[0-9]*')";
+  const baseUrl = `http://localhost:${portExpr}/agent-event`;
   return {
     agent: KIND,
     configPath: '~/.opencode/config.json',

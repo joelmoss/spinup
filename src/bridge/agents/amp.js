@@ -6,8 +6,9 @@ const EVENT_MAP = {
   'assistant': 'working',
 };
 
-function getHookConfig(listenerPort) {
-  const baseUrl = `http://localhost:${listenerPort}/agent-event`;
+function getHookConfig() {
+  const portExpr = "$(grep -o '\"hookPort\":[0-9]*' ~/.spinup/server.json | grep -o '[0-9]*')";
+  const baseUrl = `http://localhost:${portExpr}/agent-event`;
   return {
     agent: KIND,
     configPath: '~/.amp/config.json',
