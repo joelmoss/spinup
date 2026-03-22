@@ -9,9 +9,11 @@ const { NotificationManager } = require('./notifications');
 const PORT = 9500;
 const SERVER_INFO_DIR = path.join(os.homedir(), '.spinup-dashboard');
 const SERVER_INFO_PATH = path.join(SERVER_INFO_DIR, 'server.json');
+let windowStatePath = null;
 
 let mainWindow = null;
 let tray = null;
+let isQuitting = false;
 
 const registry = new ProjectRegistry();
 const server = new DashboardServer(registry, PORT);
@@ -41,15 +43,41 @@ registry.onChange(() => {
     }
   }
 
-  if (mainWindow) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('registry-update', registry.getProjects());
   }
 });
 
+function getWindowStatePath() {
+  if (!windowStatePath) {
+    windowStatePath = path.join(app.getPath('userData'), 'window.json');
+  }
+  return windowStatePath;
+}
+
+function loadWindowState() {
+  try {
+    return JSON.parse(fs.readFileSync(getWindowStatePath(), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function saveWindowState() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const bounds = mainWindow.getBounds();
+  fs.mkdirSync(SERVER_INFO_DIR, { recursive: true });
+  fs.writeFileSync(getWindowStatePath(), JSON.stringify(bounds));
+}
+
 function createWindow() {
+  const saved = loadWindowState();
+
   mainWindow = new BrowserWindow({
-    width: 480,
-    height: 700,
+    width: saved?.width ?? 480,
+    height: saved?.height ?? 700,
+    x: saved?.x,
+    y: saved?.y,
     title: 'Spinup',
     webPreferences: {
       preload: path.join(__dirname, '../renderer/preload.js'),
@@ -60,9 +88,15 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
 
+  mainWindow.on('resize', saveWindowState);
+  mainWindow.on('move', saveWindowState);
+
   mainWindow.on('close', (e) => {
-    e.preventDefault();
-    mainWindow.hide();
+    if (!isQuitting) {
+      e.preventDefault();
+      saveWindowState();
+      mainWindow.hide();
+    }
   });
 }
 
@@ -100,6 +134,7 @@ app.whenReady().then(async () => {
 });
 
 app.on('before-quit', () => {
+  isQuitting = true;
   cleanupServerInfo();
   server.stop();
 });
