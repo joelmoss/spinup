@@ -8,33 +8,50 @@ const { CommandManager } = require('./commands/commandManager');
 const { SpinupTreeDataProvider } = require('./ui/treeDataProvider');
 const { StatusBarManager } = require('./ui/statusBarManager');
 const { FileWatcherManager } = require('./fileWatcher/fileWatcherManager');
-const { BridgeClient } = require('./bridge/bridgeClient');
-const { StateReporter } = require('./bridge/stateReporter');
-const { CommandHandler } = require('./bridge/commandHandler');
-const { AgentHookListener } = require('./bridge/agentHookListener');
-const { AgentDetector } = require('./bridge/agents/agentDetector');
+// Bridge modules are lazy-loaded in setupBridge() so a missing `ws` dependency
+// (e.g. when node_modules is excluded from packaging) cannot break activation.
 
 let lastValidConfig = null;
 
-function initBridge(context, commandManager, _terminalManager) {
-  // Read dashboard port file — if missing or stale, skip silently
+function readDashboardPort() {
   const serverInfoPath = path.join(os.homedir(), '.spinup-dashboard', 'server.json');
-  let port;
   try {
     const info = JSON.parse(fs.readFileSync(serverInfoPath, 'utf8'));
-    // Check PID is alive
     try {
       process.kill(info.pid, 0);
     } catch {
-      // PID is dead — stale file
       try { fs.unlinkSync(serverInfoPath); } catch { /* ignore */ }
-      return;
+      return null;
     }
-    port = info.port;
+    return info.port;
   } catch {
-    // File doesn't exist or is unreadable — dashboard not running
+    return null;
+  }
+}
+
+function initBridge(context, commandManager, _terminalManager) {
+  let port = readDashboardPort();
+  if (!port) {
+    // Dashboard not running yet — poll every 10s until it appears
+    const pollInterval = setInterval(() => {
+      port = readDashboardPort();
+      if (port) {
+        clearInterval(pollInterval);
+        setupBridge(context, commandManager, port);
+      }
+    }, 10000);
+    context.subscriptions.push({ dispose: () => clearInterval(pollInterval) });
     return;
   }
+  setupBridge(context, commandManager, port);
+}
+
+function setupBridge(context, commandManager, port) {
+  const { BridgeClient } = require('./bridge/bridgeClient');
+  const { StateReporter } = require('./bridge/stateReporter');
+  const { CommandHandler } = require('./bridge/commandHandler');
+  const { AgentHookListener } = require('./bridge/agentHookListener');
+  const { AgentDetector } = require('./bridge/agents/agentDetector');
 
   // Construct windowId from machineId + sessionId
   const windowId = `${vscode.env.machineId}:${vscode.env.sessionId}`;
