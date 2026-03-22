@@ -6,13 +6,20 @@ class NotificationManager {
   }
 
   shouldNotify(status) {
-    return status === 'waiting_for_input' || status === 'errored' || status === 'error';
+    return (
+      status === "waiting_for_input" ||
+      status === "errored" ||
+      status === "error"
+    );
   }
 
   buildNotification(projectName, windowId, item, itemType) {
-    const action = item.status === 'waiting_for_input' ? 'is waiting for input' : 'has errored';
+    const action =
+      item.status === "waiting_for_input"
+        ? "is waiting for input"
+        : "has errored";
     return {
-      title: 'Spinup Dashboard',
+      title: "Spinup",
       body: `${item.name} ${action} in ${projectName}`,
       projectName,
       windowId,
@@ -30,7 +37,12 @@ class NotificationManager {
     if (last && now - last < this._cooldownMs) return;
 
     this._lastNotified.set(key, now);
-    const notification = this.buildNotification(projectName, windowId, item, itemType);
+    const notification = this.buildNotification(
+      projectName,
+      windowId,
+      item,
+      itemType,
+    );
     this._notifier.send(notification);
   }
 }

@@ -51,18 +51,32 @@ function initBridge(context, commandManager, _terminalManager) {
 
   // Create bridge components
   const client = new BridgeClient(port);
-  const reporter = new StateReporter(windowId, commandManager, []);
-  const handler = new CommandHandler(commandManager, {
-    focusWindow: () => vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup'),
-  });
-  const hookListener = new AgentHookListener(9501);
   const detector = new AgentDetector();
+  const reporter = new StateReporter(windowId, commandManager);
+  const handler = new CommandHandler(commandManager, { agentDetector: detector });
+  const hookListener = new AgentHookListener(9501);
 
   // Wire agent hooks → detector → reporter
+  // Only accept events from agents running in this workspace
+  const workspacePaths = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
   hookListener.onAgentEvent((event) => {
+    // Filter: only show agents whose cwd is within this workspace
+    if (event.cwd && workspacePaths.length > 0) {
+      const isLocal = workspacePaths.some((wp) => event.cwd === wp || event.cwd.startsWith(wp + '/'));
+      if (!isLocal) return;
+    }
+
+    const instanceId = event.pid || event.terminalPid || 'default';
+    const id = `${event.agent}-${instanceId}`;
+
+    if (event.event === 'idle') {
+      detector.removeAgent(id);
+      reporter.removeAgent(id);
+      return;
+    }
+
     detector.handleHookEvent(event);
-    const agents = detector.getAgents();
-    const agentState = agents.find((a) => a.kind === event.agent && a.terminalPid === event.terminalPid);
+    const agentState = detector.getAgents().find((a) => a.id === id);
     if (agentState) {
       reporter.updateAgent(agentState.id, {
         id: agentState.id,
@@ -166,13 +180,19 @@ function activate(context) {
   reg('spinup.startAll', () => commandManager.startAll());
   reg('spinup.stopAll', () => commandManager.stopAll());
   reg('spinup.restartAll', () => commandManager.restartAll());
-  reg('spinup.start', async (item) => commandManager.start(await nameFromFocused(item)));
+  reg('spinup.start', async (item) => {
+    const name = await nameFromFocused(item);
+    if (name) {
+      await commandManager.start(name);
+      commandManager.showTerminal(name);
+    }
+  });
   reg('spinup.stop', async (item) => commandManager.stop(await nameFromFocused(item)));
   reg('spinup.restart', async (item) => {
     const name = await nameFromFocused(item);
     if (name) {
       await commandManager.restart(name);
-      await vscode.commands.executeCommand('spinupCommands.focus');
+      commandManager.showTerminal(name);
     }
   });
   reg('spinup.clear', async (item) => commandManager.clear(await nameFromFocused(item)));

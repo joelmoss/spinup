@@ -12,7 +12,9 @@
   "devDependencies": {
     "@electron-forge/cli": "^7.0.0",
     "@electron-forge/maker-zip": "^7.0.0",
+    "@eslint/js": "^10.0.1",
     "electron": "^33.0.0",
+    "eslint": "^10.1.0",
     "mocha": "^10.2.0"
   },
   "dependencies": {

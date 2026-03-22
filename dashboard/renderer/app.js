@@ -1,6 +1,5 @@
 const projectsContainer = document.getElementById('projects');
 const emptyState = document.getElementById('empty-state');
-const connectionCount = document.getElementById('connection-count');
 
 window.bridge.onRegistryUpdate((projects) => {
   render(projects);
@@ -16,8 +15,6 @@ function render(projects) {
     emptyState.style.display = 'none';
     projectsContainer.style.display = 'flex';
   }
-
-  connectionCount.textContent = `${projects.length} project${projects.length !== 1 ? 's' : ''}`;
 
   const sorted = [...projects].sort((a, b) => statusPriority(a) - statusPriority(b));
 

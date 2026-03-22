@@ -20,15 +20,14 @@ function renderProjectCard(project) {
   const nameSection = document.createElement('div');
   nameSection.className = 'project-name';
 
+  const name = document.createElement('strong');
   const dot = document.createElement('span');
   dot.className = `dot ${worstStatus}`;
-  nameSection.appendChild(dot);
-
-  const name = document.createElement('strong');
-  name.textContent = project.window?.name ?? 'Unknown';
+  name.appendChild(dot);
+  name.appendChild(document.createTextNode(project.window?.name ?? 'Unknown'));
   nameSection.appendChild(name);
 
-  const pathSpan = document.createElement('span');
+  const pathSpan = document.createElement('div');
   pathSpan.className = 'project-path';
   pathSpan.textContent = project.window?.path?.replace(/^\/Users\/[^/]+/, '~') ?? '';
   nameSection.appendChild(pathSpan);
@@ -38,7 +37,8 @@ function renderProjectCard(project) {
   const focusBtn = document.createElement('button');
   focusBtn.className = 'focus-btn';
   focusBtn.textContent = 'Focus';
-  focusBtn.onclick = () => window.bridge.sendCommand(project.windowId, { type: 'window:focus' });
+  const projectPath = project.window?.path ?? '';
+  focusBtn.onclick = () => window.bridge.focusVSCode(projectPath);
   header.appendChild(focusBtn);
 
   card.appendChild(header);
@@ -46,13 +46,13 @@ function renderProjectCard(project) {
   const rows = document.createElement('div');
 
   for (const terminal of (project.state?.terminals ?? [])) {
-    rows.appendChild(renderRow(terminal, 'terminal', project.windowId));
+    rows.appendChild(renderRow(terminal, 'terminal', project.windowId, projectPath));
   }
   for (const proc of (project.state?.processes ?? [])) {
-    rows.appendChild(renderRow(proc, 'process', project.windowId));
+    rows.appendChild(renderRow(proc, 'process', project.windowId, projectPath));
   }
   for (const agent of (project.state?.agents ?? [])) {
-    rows.appendChild(renderRow(agent, 'agent', project.windowId));
+    rows.appendChild(renderRow(agent, 'agent', project.windowId, projectPath));
   }
 
   card.appendChild(rows);

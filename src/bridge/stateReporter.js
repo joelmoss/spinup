@@ -1,10 +1,9 @@
 const vscode = require('vscode');
 
 class StateReporter {
-  constructor(windowId, commandManager, terminals) {
+  constructor(windowId, commandManager) {
     this._windowId = windowId;
     this._commandManager = commandManager;
-    this._terminals = terminals;
     this._agents = new Map();
 
     this._onStateChanged = new vscode.EventEmitter();

@@ -5,9 +5,9 @@ const vscode = require('vscode');
 class CommandHandler {
   // Note: processId and terminalId in protocol messages correspond to the command name
   // (e.g., "Server"), since StateReporter uses s.name as the id field.
-  constructor(commandManager, windowActions = {}) {
+  constructor(commandManager, options = {}) {
     this._commandManager = commandManager;
-    this._windowActions = windowActions;
+    this._agentDetector = options.agentDetector ?? null;
   }
 
   handle(msg) {
@@ -22,16 +22,57 @@ class CommandHandler {
         this._commandManager.restart(msg.processId);
         break;
       case 'terminal:focus':
-        this._commandManager.showTerminal(msg.terminalId);
+        this._focusTerminal(msg.terminalId);
         break;
-      case 'window:focus':
-        if (this._windowActions.focusWindow) {
-          this._windowActions.focusWindow();
-        } else {
-          vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
+      case 'window:focus': {
+        const activeTerminal = vscode.window.activeTerminal;
+        if (activeTerminal) {
+          activeTerminal.show(true);
         }
+        vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
         break;
+      }
     }
+  }
+
+  async _focusTerminal(terminalId) {
+    if (terminalId.startsWith('term-')) {
+      const termName = terminalId.slice(5);
+      const terminal = vscode.window.terminals.find((t) => t.name === termName);
+      if (terminal) terminal.show(false);
+      return;
+    }
+
+    // Agent terminal — look up the agent's PID and find the terminal whose shell is its ancestor
+    const agent = this._agentDetector?.getAgents().find((a) => a.id === terminalId);
+    if (agent?.pid) {
+      const agentPid = parseInt(agent.pid, 10);
+      for (const terminal of vscode.window.terminals) {
+        const shellPid = await terminal.processId;
+        if (shellPid && await this._isAncestor(shellPid, agentPid)) {
+          terminal.show(false);
+          return;
+        }
+      }
+    }
+
+    // Fallback: try as a Spinup-managed process
+    this._commandManager.showTerminal(terminalId);
+  }
+
+  _isAncestor(ancestorPid, descendantPid) {
+    const { execSync } = require('child_process');
+    try {
+      // Walk up the process tree from descendant looking for ancestor
+      let pid = descendantPid;
+      for (let i = 0; i < 10; i++) {
+        const ppid = parseInt(execSync(`ps -o ppid= -p ${pid}`, { encoding: 'utf8' }).trim(), 10);
+        if (ppid === ancestorPid) return true;
+        if (ppid <= 1) return false;
+        pid = ppid;
+      }
+    } catch { /* process gone */ }
+    return false;
   }
 }
 

@@ -50,7 +50,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 480,
     height: 700,
-    title: 'Spinup Dashboard',
+    title: 'Spinup',
     webPreferences: {
       preload: path.join(__dirname, '../renderer/preload.js'),
       contextIsolation: true,
@@ -70,7 +70,7 @@ function createTray() {
   const icon = nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgklEQVQ4T2NkoBAwUqifgWoGMDIyNjAyMv5HdwUTA8P/BgYGxv+MDAxILmBkYGxgYPj/H90FjIwMDYwMDP+RXcDI+L+BkZHhP1IXMDL8b2Bk+P8fOQwYGf43MDIw/Ed2ASMD438GBob/6GHAyPi/gYHhP3IYMDIwNDAw/P+PHAYAlWk0EXZQOREAAAAASUVORK5CYII=');
   if (process.platform === 'darwin') icon.setTemplateImage(true);
   tray = new Tray(icon);
-  tray.setToolTip('Spinup Dashboard');
+  tray.setToolTip('Spinup');
   tray.on('click', () => {
     if (mainWindow) {
       mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
@@ -89,7 +89,7 @@ function writeServerInfo(port) {
 }
 
 function cleanupServerInfo() {
-  try { fs.unlinkSync(SERVER_INFO_PATH); } catch {}
+  try { fs.unlinkSync(SERVER_INFO_PATH); } catch { /* ignore */ }
 }
 
 app.whenReady().then(async () => {
@@ -104,11 +104,17 @@ app.on('before-quit', () => {
   server.stop();
 });
 
-app.on('window-all-closed', (e) => {
+app.on('window-all-closed', () => {
   // Don't quit — stay in tray
 });
 
 // IPC handler for renderer → main process commands
 ipcMain.on('send-command', (_event, windowId, command) => {
   server.sendCommand(windowId, command);
+});
+
+ipcMain.on('focus-vscode', (_event, projectPath) => {
+  const { exec } = require('child_process');
+  // Open the folder in VS Code — this brings the existing window to front
+  exec(`/usr/bin/open -a "Visual Studio Code" ${JSON.stringify(projectPath)}`);
 });

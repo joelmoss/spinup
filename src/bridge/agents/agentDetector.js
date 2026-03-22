@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 
 const AGENT_PATTERNS = [
-  { pattern: /claude\s*code/i, kind: 'claude-code', name: 'Claude Code' },
+  { pattern: /\bclaude\b/i, kind: 'claude-code', name: 'Claude Code' },
   { pattern: /\bcodex\b/i, kind: 'codex-cli', name: 'Codex CLI' },
   { pattern: /\bcopilot\b/i, kind: 'copilot-cli', name: 'Copilot CLI' },
   { pattern: /\bgemini\b/i, kind: 'gemini-cli', name: 'Gemini CLI' },
@@ -29,14 +29,16 @@ class AgentDetector {
   }
 
   handleHookEvent(event) {
-    const id = `${event.agent}-${event.terminalPid}`;
+    const instanceId = event.pid || event.terminalPid || 'default';
+    const id = `${event.agent}-${instanceId}`;
     const agentState = {
       id,
       kind: event.agent,
       name: AGENT_PATTERNS.find((p) => p.kind === event.agent)?.name ?? event.agent,
       status: event.event,
       detail: event.detail ?? '',
-      terminalPid: event.terminalPid,
+      pid: event.pid ?? null,
+      cwd: event.cwd ?? null,
     };
 
     this._agents.set(id, agentState);

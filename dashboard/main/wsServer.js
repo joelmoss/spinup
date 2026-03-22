@@ -23,7 +23,7 @@ class DashboardServer {
             const msg = JSON.parse(data);
             this._handleMessage(ws, msg);
             if (msg.type === 'connect') windowId = msg.windowId;
-          } catch {}
+          } catch { /* ignore malformed JSON */ }
         });
 
         ws.on('close', () => {
