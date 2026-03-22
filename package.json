@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "joelmoss",
   "license": "MIT",
+  "icon": "resources/icon.png",
   "repository": {
     "url": "https://github.com/joelmoss/spinup"
   },

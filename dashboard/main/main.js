@@ -173,6 +173,10 @@ function startHookListener() {
 }
 
 app.whenReady().then(async () => {
+  if (process.platform === 'darwin') {
+    const dockIcon = nativeImage.createFromPath(path.join(__dirname, '../resources/icon.png'));
+    app.dock.setIcon(dockIcon);
+  }
   const actualPort = await server.start();
   const actualHookPort = await startHookListener();
   writeServerInfo(actualPort, actualHookPort);

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="100" y1="100" x2="924" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="50%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <linearGradient id="rocket" x1="512" y1="760" x2="512" y2="160" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="512" cy="770" r="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Rounded square background with ~10% inset -->
+  <rect x="100" y="100" width="824" height="824" rx="180" fill="url(#bg)"/>
+
+  <!-- Sparkles -->
+  <circle cx="252" cy="284" r="10" fill="white" opacity="0.5"/>
+  <circle cx="808" cy="244" r="8" fill="white" opacity="0.4"/>
+  <circle cx="220" cy="624" r="8" fill="white" opacity="0.35"/>
+  <circle cx="824" cy="580" r="10" fill="white" opacity="0.45"/>
+  <circle cx="372" cy="188" r="6" fill="white" opacity="0.3"/>
+  <circle cx="740" cy="820" r="8" fill="white" opacity="0.3"/>
+
+  <!-- Exhaust glow -->
+  <ellipse cx="512" cy="770" rx="80" ry="56" fill="url(#glow)"/>
+
+  <!-- Rocket body -->
+  <path d="M512 200c-76 88-106 192-106 280 0 50 24 90 52 118h108c28-28 52-68 52-118 0-88-30-192-106-280z"
+        fill="url(#rocket)" opacity="0.95"/>
+
+  <!-- Nose cone highlight -->
+  <path d="M512 200c-38 50-68 108-76 168 24-40 50-70 76-80 26 10 52 40 76 80-8-60-38-118-76-168z"
+        fill="white" opacity="0.3"/>
+
+  <!-- Window -->
+  <circle cx="512" cy="450" r="50" fill="#7C3AED" opacity="0.8"/>
+  <circle cx="512" cy="450" r="36" fill="#A78BFA" opacity="0.5"/>
+  <circle cx="500" cy="440" r="14" fill="white" opacity="0.6"/>
+
+  <!-- Fins -->
+  <path d="M406 620c-38 28-68 78-78 118l78-40z" fill="#FDE68A" opacity="0.8"/>
+  <path d="M618 620c38 28 68 78 78 118l-78-40z" fill="#FDE68A" opacity="0.8"/>
+
+  <!-- Exhaust flames -->
+  <path d="M472 698c14 62 26 100 40 130 14-30 26-68 40-130" fill="#F59E0B" opacity="0.9"/>
+  <path d="M482 698c10 50 20 80 30 106 10-26 20-56 30-106" fill="#FDE68A" opacity="0.8"/>
+  <path d="M492 710c8 38 12 56 20 76 8-20 12-38 20-76" fill="white" opacity="0.6"/>
+</svg>
