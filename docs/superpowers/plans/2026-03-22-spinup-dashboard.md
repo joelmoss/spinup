@@ -1436,7 +1436,7 @@ cd /Users/joelmoss/dev/spinup && mkdir -p dashboard/main dashboard/renderer/comp
 ```javascript
 module.exports = {
   packagerConfig: {
-    name: 'Spinup Dashboard',
+    name: 'Spinup',
   },
   makers: [
     { name: '@electron-forge/maker-zip' },
@@ -1960,7 +1960,7 @@ suite('NotificationManager', () => {
 
   test('buildNotification returns correct shape for agent waiting', () => {
     const n = manager.buildNotification('spinup', { id: 'a1', name: 'Claude Code', status: 'waiting_for_input', kind: 'claude-code' }, 'agent');
-    assert.strictEqual(n.title, 'Spinup Dashboard');
+    assert.strictEqual(n.title, 'Spinup');
     assert.ok(n.body.includes('Claude Code'));
     assert.ok(n.body.includes('waiting'));
     assert.ok(n.body.includes('spinup'));
@@ -2009,7 +2009,7 @@ class NotificationManager {
   buildNotification(projectName, item, itemType) {
     const action = item.status === 'waiting_for_input' ? 'is waiting for input' : 'has errored';
     return {
-      title: 'Spinup Dashboard',
+      title: 'Spinup',
       body: `${item.name} ${action} in ${projectName}`,
       projectName,
       itemId: item.id,
@@ -2114,7 +2114,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 480,
     height: 700,
-    title: 'Spinup Dashboard',
+    title: 'Spinup',
     webPreferences: {
       preload: path.join(__dirname, '../renderer/preload.js'),
       contextIsolation: true,
@@ -2135,7 +2135,7 @@ function createTray() {
   const icon = nativeImage.createFromDataURL('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgklEQVQ4T2NkoBAwUqifgWoGMDIyNjAyMv5HdwUTA8P/BgYGxv+MDAxILmBkYGxgYPj/H90FjIwMDYwMDP+RXcDI+L+BkZHhP1IXMDL8b2Bk+P8fOQwYGf43MDIw/Ed2ASMD438GBob/6GHAyPi/gYHhP3IYMDIwNDAw/P+PHAYAlWk0EXZQOREAAAAASUVORK5CYII=');
   if (process.platform === 'darwin') icon.setTemplateImage(true);
   tray = new Tray(icon);
-  tray.setToolTip('Spinup Dashboard');
+  tray.setToolTip('Spinup');
   tray.on('click', () => {
     if (mainWindow) {
       mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
@@ -2223,12 +2223,12 @@ Create `dashboard/renderer/index.html`:
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'">
-  <title>Spinup Dashboard</title>
+  <title>Spinup</title>
   <link rel="stylesheet" href="styles/dashboard.css">
 </head>
 <body>
   <header>
-    <h1>Spinup Dashboard</h1>
+    <h1>Spinup</h1>
     <span id="connection-count">0 projects</span>
   </header>
   <main id="projects"></main>

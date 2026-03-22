@@ -1,6 +1,6 @@
 module.exports = {
   packagerConfig: {
-    name: 'Spinup Dashboard',
+    name: 'Spinup',
   },
   makers: [
     { name: '@electron-forge/maker-zip' },
