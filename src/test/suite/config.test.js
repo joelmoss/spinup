@@ -3,26 +3,6 @@ const vscode = require('vscode');
 const { loadConfig } = require('../../config/settings');
 
 suite('Settings', () => {
-  let originalGet;
-
-  function stubCommands(commands) {
-    const config = vscode.workspace.getConfiguration('spinup');
-    originalGet = config.get;
-    // Stub getConfiguration to return our test data
-    const origGetConfig = vscode.workspace.getConfiguration;
-    vscode.workspace.getConfiguration = (section) => {
-      if (section === 'spinup') {
-        return {
-          get(key, defaultValue) {
-            if (key === 'commands') return commands;
-            return defaultValue;
-          },
-        };
-      }
-      return origGetConfig(section);
-    };
-  }
-
   teardown(() => {
     // Restore original getConfiguration if it was stubbed
     if (vscode.workspace._originalGetConfiguration) {

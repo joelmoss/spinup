@@ -192,7 +192,9 @@
           "description": "Map of command names to their configuration",
           "additionalProperties": {
             "type": "object",
-            "required": ["command"],
+            "required": [
+              "command"
+            ],
             "properties": {
               "command": {
                 "type": "string",
@@ -238,11 +240,13 @@
     }
   },
   "scripts": {
-    "lint": "eslint src --ext js",
+    "lint": "eslint src",
     "test": "node ./src/test/runTests.js"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@vscode/test-electron": "^2.3.8",
+    "eslint": "^10.1.0",
     "mocha": "^10.2.0"
   },
   "overrides": {

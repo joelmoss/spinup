@@ -2,7 +2,6 @@ const assert = require('assert');
 const path = require('path');
 const { TerminalManager } = require('../../terminal/terminalManager');
 const { CommandManager } = require('../../commands/commandManager');
-const { CommandTreeItem } = require('../../ui/treeItems');
 const { CommandStatus } = require('../../types');
 
 suite('Keybindings', () => {
@@ -108,7 +107,6 @@ suite('Keybinding commands', () => {
     }));
 
     await commandManager.start('Server');
-    let statusChanges = 0;
     const states = commandManager.getStates();
     const proc = states.find(s => s.name === 'Server');
     assert.strictEqual(proc.status, CommandStatus.Running);
