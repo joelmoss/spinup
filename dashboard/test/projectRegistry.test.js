@@ -77,12 +77,13 @@ suite('ProjectRegistry', () => {
   });
 
   test('getWorstStatus returns waiting_for_input if any agent waiting', () => {
-    registry.addProject('win-1', { kind: 'directory', name: 'spinup', path: '/dev/spinup', folders: [] });
+    registry.addProject('win-1', { kind: 'directory', name: 'spinup', path: '/dev/spinup', folders: [{ name: 'spinup', path: '/dev/spinup' }] });
     registry.updateState('win-1', {
       terminals: [],
-      agents: [{ id: 'a1', name: 'Claude', status: 'waiting_for_input' }],
+      agents: [],
       processes: [{ id: 'p1', name: 'Server', status: 'running' }],
     });
+    registry.handleAgentEvent({ agent: 'claude-code', event: 'waiting_for_input', detail: 'idle_prompt', pid: '100', cwd: '/dev/spinup' });
     assert.strictEqual(registry.getWorstStatus('win-1'), 'waiting_for_input');
   });
 

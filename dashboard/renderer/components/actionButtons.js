@@ -60,7 +60,9 @@ function renderActions(item, type, windowId, projectPath) {
     show.title = 'Show';
     show.onclick = () => {
       window.bridge.focusVSCode(projectPath);
-      window.bridge.sendCommand(windowId, { type: 'terminal:focus', terminalId: item.id });
+      const focusMsg = { type: 'terminal:focus', terminalId: item.id };
+      if (item.pid) focusMsg.agentPid = item.pid;
+      window.bridge.sendCommand(windowId, focusMsg);
     };
     container.appendChild(show);
   }

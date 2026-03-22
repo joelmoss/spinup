@@ -1,4 +1,5 @@
 const { app, BrowserWindow, Tray, Menu, Notification, nativeImage, ipcMain } = require('electron');
+const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -7,6 +8,7 @@ const { ProjectRegistry } = require('./projectRegistry');
 const { NotificationManager } = require('./notifications');
 
 const PORT = 9500;
+const HOOK_PORT = 9501;
 const SERVER_INFO_DIR = path.join(os.homedir(), '.spinup-dashboard');
 const SERVER_INFO_PATH = path.join(SERVER_INFO_DIR, 'server.json');
 let windowStatePath = null;
@@ -126,8 +128,37 @@ function cleanupServerInfo() {
   try { fs.unlinkSync(SERVER_INFO_PATH); } catch { /* ignore */ }
 }
 
+let hookServer = null;
+
+function startHookListener() {
+  hookServer = http.createServer((req, res) => {
+    if (req.url !== '/agent-event' || req.method !== 'POST') {
+      res.writeHead(req.method !== 'POST' && req.url === '/agent-event' ? 405 : 404);
+      res.end();
+      return;
+    }
+    let body = '';
+    req.on('data', (chunk) => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const event = JSON.parse(body);
+        registry.handleAgentEvent(event);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end('{"ok":true}');
+      } catch {
+        res.writeHead(400);
+        res.end('{"error":"invalid json"}');
+      }
+    });
+  });
+
+  hookServer.listen(HOOK_PORT, '127.0.0.1', () => {});
+  hookServer.on('error', () => {}); // port may be in use — non-fatal
+}
+
 app.whenReady().then(async () => {
   const actualPort = await server.start();
+  startHookListener();
   writeServerInfo(actualPort);
   createWindow();
   createTray();
@@ -136,6 +167,7 @@ app.whenReady().then(async () => {
 app.on('before-quit', () => {
   isQuitting = true;
   cleanupServerInfo();
+  if (hookServer) hookServer.close();
   server.stop();
 });
 

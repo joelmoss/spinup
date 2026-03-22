@@ -4,7 +4,6 @@ class StateReporter {
   constructor(windowId, commandManager) {
     this._windowId = windowId;
     this._commandManager = commandManager;
-    this._agents = new Map();
 
     this._onStateChanged = new vscode.EventEmitter();
     this.onStateChanged = this._onStateChanged.event;
@@ -25,13 +24,11 @@ class StateReporter {
       metrics: s.metrics ?? null,
     }));
 
-    const agents = Array.from(this._agents.values());
-
     return {
       type: 'state:full',
       windowId: this._windowId,
       terminals: [],
-      agents,
+      agents: [],
       processes,
     };
   }
@@ -40,12 +37,11 @@ class StateReporter {
     const currentState = this.getFullState();
     const changes = {
       terminals: { added: [], removed: [], updated: [] },
-      agents: { added: [], removed: [], updated: [] },
       processes: { added: [], removed: [], updated: [] },
     };
     let hasChanges = false;
 
-    for (const category of ['processes', 'agents', 'terminals']) {
+    for (const category of ['processes', 'terminals']) {
       const oldItems = new Map((previousState[category] ?? []).map((i) => [i.id, i]));
       const newItems = new Map((currentState[category] ?? []).map((i) => [i.id, i]));
 
@@ -70,16 +66,6 @@ class StateReporter {
     if (!hasChanges) return null;
 
     return { type: 'state:update', windowId: this._windowId, changes };
-  }
-
-  updateAgent(id, agentState) {
-    this._agents.set(id, agentState);
-    this._onStateChanged.fire();
-  }
-
-  removeAgent(id) {
-    this._agents.delete(id);
-    this._onStateChanged.fire();
   }
 
   dispose() {

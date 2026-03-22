@@ -16,20 +16,7 @@ function render(projects) {
     projectsContainer.style.display = 'flex';
   }
 
-  const sorted = [...projects].sort((a, b) => statusPriority(a) - statusPriority(b));
-
-  for (const project of sorted) {
+  for (const project of projects) {
     projectsContainer.appendChild(renderProjectCard(project));
   }
-}
-
-function statusPriority(project) {
-  const statuses = [
-    ...(project.state?.processes ?? []).map((p) => p.status),
-    ...(project.state?.agents ?? []).map((a) => a.status),
-  ];
-  if (statuses.includes('errored') || statuses.includes('error')) return 0;
-  if (statuses.includes('waiting_for_input')) return 1;
-  if (statuses.includes('running') || statuses.includes('working')) return 2;
-  return 3;
 }
