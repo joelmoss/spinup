@@ -8,7 +8,10 @@ class SpinupTerminal {
     this._terminal = undefined;
     this._onDidClose = new vscode.EventEmitter();
     this.onDidClose = this._onDidClose.event;
+    this._onDidShellExecEnd = new vscode.EventEmitter();
+    this.onDidShellExecEnd = this._onDidShellExecEnd.event;
     this._closeListener = undefined;
+    this._shellExecListener = undefined;
   }
 
   get isOpen() {
@@ -54,7 +57,15 @@ class SpinupTerminal {
         this._terminal = undefined;
         this._closeListener?.dispose();
         this._closeListener = undefined;
+        this._shellExecListener?.dispose();
+        this._shellExecListener = undefined;
         this._onDidClose.fire(exitStatus?.code);
+      }
+    });
+
+    this._shellExecListener = vscode.window.onDidEndTerminalShellExecution(event => {
+      if (event.terminal === this._terminal) {
+        this._onDidShellExecEnd.fire(event.exitCode);
       }
     });
   }
@@ -78,9 +89,11 @@ class SpinupTerminal {
 
   dispose() {
     this._closeListener?.dispose();
+    this._shellExecListener?.dispose();
     this._terminal?.dispose();
     this._terminal = undefined;
     this._onDidClose.dispose();
+    this._onDidShellExecEnd.dispose();
   }
 }
 

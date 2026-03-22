@@ -110,9 +110,9 @@ class CommandProcess {
     this._shellExecListener?.dispose();
     this._shellExecListener = undefined;
     if (!this._config.interactive) {
-      this._shellExecListener = vscode.window.onDidEndTerminalShellExecution(event => {
-        if (event.terminal === this._terminal?.terminal && event.exitCode !== 0) {
-          this._handleExit(event.exitCode);
+      this._shellExecListener = this._terminal.onDidShellExecEnd(exitCode => {
+        if (exitCode !== 0) {
+          this._handleExit(exitCode);
         }
       });
     }
