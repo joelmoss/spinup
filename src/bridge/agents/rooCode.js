@@ -7,7 +7,7 @@ const EVENT_MAP = {
   'ask': 'waiting_for_input',
 };
 
-function getHookConfig(_listenerPort) {
+function getHookConfig() {
   return {
     agent: KIND,
     configPath: null,

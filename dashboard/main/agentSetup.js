@@ -13,8 +13,7 @@ const agentModules = [
 ];
 
 class AgentSetup {
-  constructor(listenerPort, configDir) {
-    this._listenerPort = listenerPort;
+  constructor(configDir) {
     this._markerPath = path.join(configDir, '.agents-configured');
   }
 
@@ -23,7 +22,7 @@ class AgentSetup {
   }
 
   generateAllConfigs() {
-    return agentModules.map((mod) => mod.getHookConfig(this._listenerPort));
+    return agentModules.map((mod) => mod.getHookConfig());
   }
 
   isConfigured() {

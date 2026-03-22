@@ -4,8 +4,6 @@ const { WebSocketServer } = require('ws');
 const { BridgeClient } = require('../../bridge/bridgeClient');
 const { StateReporter } = require('../../bridge/stateReporter');
 const { CommandHandler } = require('../../bridge/commandHandler');
-const { AgentHookListener } = require('../../bridge/agentHookListener');
-const { AgentDetector } = require('../../bridge/agents/agentDetector');
 const vscode = require('vscode');
 
 suite('Bridge Integration', () => {
@@ -15,8 +13,6 @@ suite('Bridge Integration', () => {
   let client;
   let reporter;
   let handler;
-  let hookListener;
-  let detector;
 
   setup((done) => {
     httpServer = http.createServer();
@@ -30,8 +26,6 @@ suite('Bridge Integration', () => {
   teardown(async () => {
     if (client) client.dispose();
     if (reporter) reporter.dispose();
-    if (hookListener) await hookListener.stop();
-    if (detector) detector.dispose();
     await new Promise((resolve) => wss.close(() => httpServer.close(resolve)));
   });
 
@@ -83,35 +77,4 @@ suite('Bridge Integration', () => {
     client.connect();
   });
 
-  test('agent hook event flows through to state reporter', async () => {
-    detector = new AgentDetector();
-    hookListener = new AgentHookListener(0);
-    const hookPort = await hookListener.start();
-
-    const agentEvents = [];
-    hookListener.onAgentEvent((event) => {
-      detector.handleHookEvent(event);
-      agentEvents.push(event);
-    });
-
-    // Simulate a Claude Code hook callback
-    await new Promise((resolve, reject) => {
-      const data = JSON.stringify({ agent: 'claude-code', event: 'waiting_for_input', detail: 'idle_prompt', terminalPid: 999 });
-      const req = http.request({
-        hostname: 'localhost', port: hookPort, path: '/agent-event', method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
-      }, (_res) => resolve());
-      req.on('error', reject);
-      req.write(data);
-      req.end();
-    });
-
-    assert.strictEqual(agentEvents.length, 1);
-    assert.strictEqual(agentEvents[0].agent, 'claude-code');
-    assert.strictEqual(agentEvents[0].event, 'waiting_for_input');
-
-    const agents = detector.getAgents();
-    assert.strictEqual(agents.length, 1);
-    assert.strictEqual(agents[0].status, 'waiting_for_input');
-  });
 });

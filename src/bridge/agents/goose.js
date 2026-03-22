@@ -9,13 +9,14 @@ const EVENT_MAP = {
 function getHookConfig() {
   const portExpr = "$(grep -o '\"hookPort\":[0-9]*' ~/.spinup/server.json | grep -o '[0-9]*')";
   const baseUrl = `http://localhost:${portExpr}/agent-event`;
+  const common = `"agent":"${KIND}","pid":"$PPID","cwd":"$PWD"`;
   return {
     agent: KIND,
     configPath: '~/.goose/config.json',
     hooks: [
-      { event: 'running', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{"agent":"${KIND}","event":"working","detail":"running"}'` },
-      { event: 'stable', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{"agent":"${KIND}","event":"waiting_for_input","detail":"stable"}'` },
-      { event: 'error', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{"agent":"${KIND}","event":"error","detail":"error"}'` },
+      { event: 'running', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{${common},"event":"working","detail":"running"}'` },
+      { event: 'stable', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{${common},"event":"waiting_for_input","detail":"stable"}'` },
+      { event: 'error', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{${common},"event":"error","detail":"error"}'` },
     ],
   };
 }

@@ -7,12 +7,13 @@ const EVENT_MAP = {
 function getHookConfig() {
   const portExpr = "$(grep -o '\"hookPort\":[0-9]*' ~/.spinup/server.json | grep -o '[0-9]*')";
   const baseUrl = `http://localhost:${portExpr}/agent-event`;
+  const common = `"agent":"${KIND}","pid":"$PPID","cwd":"$PWD"`;
   return {
     agent: KIND,
     hooks: [
-      { event: 'turn.started', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{"agent":"${KIND}","event":"working","detail":"turn.started"}'` },
-      { event: 'turn.completed', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{"agent":"${KIND}","event":"waiting_for_input","detail":"turn.completed"}'` },
-      { event: 'permission_request', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{"agent":"${KIND}","event":"waiting_for_input","detail":"permission_request"}'` },
+      { event: 'turn.started', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{${common},"event":"working","detail":"turn.started"}'` },
+      { event: 'turn.completed', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{${common},"event":"waiting_for_input","detail":"turn.completed"}'` },
+      { event: 'permission_request', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{${common},"event":"waiting_for_input","detail":"permission_request"}'` },
     ],
   };
 }

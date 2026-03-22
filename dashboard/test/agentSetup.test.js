@@ -21,7 +21,7 @@ suite('AgentSetup', () => {
 
   setup(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-setup-'));
-    agentSetup = new AgentSetup(9501, tmpDir);
+    agentSetup = new AgentSetup(tmpDir);
   });
 
   teardown(() => {

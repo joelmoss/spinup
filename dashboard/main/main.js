@@ -140,7 +140,10 @@ function startHookListener() {
         return;
       }
       let body = '';
-      req.on('data', (chunk) => { body += chunk; });
+      req.on('data', (chunk) => {
+        body += chunk;
+        if (body.length > 65536) { req.destroy(); }
+      });
       req.on('end', () => {
         try {
           const event = JSON.parse(body);
@@ -158,11 +161,13 @@ function startHookListener() {
       resolve(hookServer.address().port);
     });
 
-    hookServer.on('error', () => {
-      // Preferred port busy — use any available port
-      hookServer.listen(0, '127.0.0.1', () => {
-        resolve(hookServer.address().port);
-      });
+    hookServer.once('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        // Preferred port busy — use any available port
+        hookServer.listen(0, '127.0.0.1', () => {
+          resolve(hookServer.address().port);
+        });
+      }
     });
   });
 }

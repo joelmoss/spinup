@@ -9,13 +9,14 @@ const EVENT_MAP = {
 function getHookConfig() {
   const portExpr = "$(grep -o '\"hookPort\":[0-9]*' ~/.spinup/server.json | grep -o '[0-9]*')";
   const baseUrl = `http://localhost:${portExpr}/agent-event`;
+  const common = `"agent":"${KIND}","pid":"$PPID","cwd":"$PWD"`;
   return {
     agent: KIND,
     configPath: '~/.gemini/settings.json',
     hooks: [
-      { event: 'before_agent', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{"agent":"${KIND}","event":"working","detail":"before_agent"}'` },
-      { event: 'after_agent', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{"agent":"${KIND}","event":"idle","detail":"after_agent"}'` },
-      { event: 'session_end', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{"agent":"${KIND}","event":"idle","detail":"session_end"}'` },
+      { event: 'before_agent', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{${common},"event":"working","detail":"before_agent"}'` },
+      { event: 'after_agent', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{${common},"event":"idle","detail":"after_agent"}'` },
+      { event: 'session_end', command: `curl -s -X POST ${baseUrl} -H 'Content-Type: application/json' -d '{${common},"event":"idle","detail":"session_end"}'` },
     ],
   };
 }

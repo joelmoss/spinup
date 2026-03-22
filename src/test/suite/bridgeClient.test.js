@@ -102,18 +102,14 @@ suite('BridgeClient', () => {
 });
 
 suite('Bridge integration', () => {
-  test('BridgeClient, StateReporter, CommandHandler, and AgentHookListener can be instantiated together', () => {
+  test('BridgeClient, StateReporter, and CommandHandler can be instantiated together', () => {
     const { BridgeClient } = require('../../bridge/bridgeClient');
     const { StateReporter } = require('../../bridge/stateReporter');
     const { CommandHandler } = require('../../bridge/commandHandler');
-    const { AgentHookListener } = require('../../bridge/agentHookListener');
-    const { AgentDetector } = require('../../bridge/agents/agentDetector');
 
     // Verify all modules load and can be instantiated
     assert.ok(BridgeClient);
     assert.ok(StateReporter);
     assert.ok(CommandHandler);
-    assert.ok(AgentHookListener);
-    assert.ok(AgentDetector);
   });
 });

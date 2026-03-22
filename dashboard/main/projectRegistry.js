@@ -38,9 +38,7 @@ class ProjectRegistry extends EventEmitter {
   updateState(windowId, state) {
     const project = this._projects.get(windowId);
     if (!project) return;
-    const agents = project.state.agents;
-    project.state = state;
-    project.state.agents = agents;
+    project.state = { ...state, agents: project.state.agents };
     this.emit('change');
   }
 
@@ -48,7 +46,7 @@ class ProjectRegistry extends EventEmitter {
     const project = this._projects.get(windowId);
     if (!project) return;
 
-    for (const category of ['terminals', 'agents', 'processes']) {
+    for (const category of ['terminals', 'processes']) {
       const delta = changes[category];
       if (!delta) continue;
 

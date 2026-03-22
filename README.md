@@ -43,8 +43,8 @@ A Visual Studio Code extension that lets you define and manage multiple concurre
 - **Testing**: Mocha (TDD style) via `@vscode/test-electron`
 - **Linting**: ESLint 10
 - **Dashboard**: Electron 33 with Electron Forge
-- **Bridge Protocol**: WebSocket (`ws` library) on port 9500
-- **Agent Hook Listener**: HTTP server on port 9501
+- **Bridge Protocol**: WebSocket (`ws` library) on preferred port 19500 (dynamic fallback)
+- **Agent Hook Listener**: HTTP server in the dashboard on preferred port 19501 (dynamic fallback)
 
 ---
 
@@ -217,7 +217,7 @@ spinup/
 │   │   ├── bridgeClient.js        # WebSocket client connecting to the dashboard
 │   │   ├── stateReporter.js       # Computes full state and deltas for the dashboard
 │   │   ├── commandHandler.js      # Handles incoming commands from the dashboard
-│   │   ├── agentHookListener.js   # HTTP server (port 9501) receiving agent hook events
+│   │   ├── agentHookListener.js   # HTTP server receiving agent hook events
 │   │   └── agents/
 │   │       ├── agentDetector.js   # Detects and tracks AI coding agents
 │   │       ├── claudeCode.js      # Claude Code hook configuration
@@ -279,7 +279,7 @@ spinup/
 
 10. **Config Hot Reload** -- `onDidChangeConfig` listens for VS Code settings changes filtered to `spinup` and triggers `CommandManager.reconcile()`, which diffs the old and new configs, adding/removing/updating commands as needed.
 
-11. **Bridge Initialization** -- `initBridge()` checks for `~/.spinup-dashboard/server.json` to find the dashboard's WebSocket port. If the dashboard is not running, it polls every 10 seconds. Once found, it sets up the bridge components (see Dashboard Bridge section below).
+11. **Bridge Initialization** -- `initBridge()` checks for `~/.spinup/server.json` to find the dashboard's WebSocket port. If the dashboard is not running, it polls every 10 seconds. Once found, it sets up the bridge components (see Dashboard Bridge section below).
 
 12. **Deactivation** -- All disposables registered via `context.subscriptions` are cleaned up by VS Code.
 
@@ -390,7 +390,7 @@ npm install
 npm start
 ```
 
-This launches the Electron app via Electron Forge. The dashboard listens on `ws://127.0.0.1:9500` for VS Code extension connections. It writes a `server.json` file to `~/.spinup-dashboard/` so extensions can discover it.
+This launches the Electron app via Electron Forge. The dashboard listens on `ws://127.0.0.1:19500` (preferred port, with dynamic fallback) for VS Code extension connections. It writes a `server.json` file to `~/.spinup/` so extensions can discover it.
 
 ### Dashboard Architecture
 
@@ -450,7 +450,7 @@ State is sent as a full snapshot on connection and every 30 seconds (heartbeat).
 
 Spinup detects AI coding agents running in your workspace via two mechanisms:
 
-1. **Agent Hook Events** -- An HTTP server on port 9501 (`AgentHookListener`) receives POST requests from agent lifecycle hooks. Agents like Claude Code can be configured to send events (session start, idle prompt, permission prompt, stop) to this endpoint.
+1. **Agent Hook Events** -- An HTTP server in the dashboard (`AgentHookListener`) on preferred port 19501 (with dynamic fallback) receives POST requests from agent lifecycle hooks. Agents like Claude Code can be configured to send events (session start, idle prompt, permission prompt, stop) to this endpoint.
 
 2. **Terminal Name Pattern Matching** -- `AgentDetector` matches terminal names against known patterns (e.g., `/\bclaude\b/i` for Claude Code) to detect agents started in VS Code terminals.
 
@@ -621,15 +621,15 @@ Settings changes are detected via VS Code's `onDidChangeConfiguration` event. If
 ### Dashboard Not Connecting
 
 - Make sure the dashboard is running (`cd dashboard && npm start`).
-- The dashboard writes its port and PID to `~/.spinup-dashboard/server.json`. If this file is stale (pointing to a dead process), the extension will clean it up and poll for a new one.
+- The dashboard writes its port and PID to `~/.spinup/server.json`. If this file is stale (pointing to a dead process), the extension will clean it up and poll for a new one.
 - The extension polls every 10 seconds for the dashboard. After starting the dashboard, allow up to 10 seconds for the extension to connect.
-- Both the dashboard WebSocket server (port 9500) and the agent hook listener (port 9501) bind to `127.0.0.1` only.
+- Both the dashboard WebSocket server (preferred port 19500) and the agent hook listener (preferred port 19501) bind to `127.0.0.1` only. Ports are dynamically allocated if the preferred port is unavailable.
 
 ### Agent Detection Not Working
 
 - Agent hook events are only shown for agents whose working directory is within the current workspace folders.
-- The `AgentHookListener` starts on port 9501. If that port is already in use, the listener silently fails (non-fatal).
-- Agents must be configured to send HTTP POST requests to `http://localhost:9501/agent-event` with a JSON body containing at minimum `agent` (kind) and `event` (status) fields.
+- The `AgentHookListener` in the dashboard starts on preferred port 19501 (with dynamic fallback). The actual port is recorded in `~/.spinup/server.json`.
+- Agents must be configured to send HTTP POST requests to the agent event endpoint (see `server.json` for the actual port) with a JSON body containing at minimum `agent` (kind) and `event` (status) fields.
 
 ### Metrics Not Showing
 
