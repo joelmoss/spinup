@@ -13,9 +13,9 @@
     "@electron-forge/cli": "^7.0.0",
     "@electron-forge/maker-zip": "^7.0.0",
     "@eslint/js": "^10.0.1",
-    "electron": "^33.0.0",
+    "electron": "^41.0.3",
     "eslint": "^10.1.0",
-    "mocha": "^10.2.0"
+    "mocha": "^11.7.5"
   },
   "dependencies": {
     "ws": "^8.18.0"
