@@ -1,5 +1,5 @@
 {
-  "name": "spinup-dashboard",
+  "name": "spinup",
   "version": "0.1.0",
   "description": "Companion dashboard for Spinup VS Code extension",
   "main": "main/main.js",
