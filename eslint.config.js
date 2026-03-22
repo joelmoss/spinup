@@ -18,6 +18,7 @@ module.exports = [
         clearTimeout: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly',
+        Buffer: 'readonly',
       },
     },
     rules: {

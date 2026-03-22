@@ -1,0 +1,7 @@
+{"type":"server-started","port":58084,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:58084","screen_dir":"/Users/joelmoss/dev/spinup/.superpowers/brainstorm/77385-1774192664"}
+{"type":"screen-added","file":"/Users/joelmoss/dev/spinup/.superpowers/brainstorm/77385-1774192664/architecture-overview.html"}
+{"type":"screen-added","file":"/Users/joelmoss/dev/spinup/.superpowers/brainstorm/77385-1774192664/ui-layout.html"}
+{"type":"screen-added","file":"/Users/joelmoss/dev/spinup/.superpowers/brainstorm/77385-1774192664/ui-dashboard.html"}
+{"type":"screen-added","file":"/Users/joelmoss/dev/spinup/.superpowers/brainstorm/77385-1774192664/ui-dashboard-v2.html"}
+{"type":"screen-added","file":"/Users/joelmoss/dev/spinup/.superpowers/brainstorm/77385-1774192664/waiting.html"}
+{"type":"server-stopped","reason":"idle timeout"}

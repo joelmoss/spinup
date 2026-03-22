@@ -50,3 +50,14 @@ VS Code Settings (spinup.commands)
 ## Version Control
 
 This repo uses Jujutsu (jj). Use `jj` commands, not `git`. Use `jj commit` (not `jj describe`) when committing.
+
+## Dashboard
+
+The `dashboard/` directory contains the Electron companion app (Spinup Dashboard).
+
+```bash
+cd dashboard && npm start    # Run the Electron dashboard app
+cd dashboard && npm test     # Run dashboard tests (Mocha TDD)
+```
+
+The extension bridge connects to the dashboard via WebSocket. Agent hooks report state via HTTP to the extension's AgentHookListener (port 9501).

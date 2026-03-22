@@ -1,12 +1,136 @@
 const vscode = require('vscode');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const { loadConfig, onDidChangeConfig } = require('./config/settings');
 const { TerminalManager } = require('./terminal/terminalManager');
 const { CommandManager } = require('./commands/commandManager');
 const { SpinupTreeDataProvider } = require('./ui/treeDataProvider');
 const { StatusBarManager } = require('./ui/statusBarManager');
 const { FileWatcherManager } = require('./fileWatcher/fileWatcherManager');
+const { BridgeClient } = require('./bridge/bridgeClient');
+const { StateReporter } = require('./bridge/stateReporter');
+const { CommandHandler } = require('./bridge/commandHandler');
+const { AgentHookListener } = require('./bridge/agentHookListener');
+const { AgentDetector } = require('./bridge/agents/agentDetector');
 
 let lastValidConfig = null;
+
+function initBridge(context, commandManager, _terminalManager) {
+  // Read dashboard port file — if missing or stale, skip silently
+  const serverInfoPath = path.join(os.homedir(), '.spinup-dashboard', 'server.json');
+  let port;
+  try {
+    const info = JSON.parse(fs.readFileSync(serverInfoPath, 'utf8'));
+    // Check PID is alive
+    try {
+      process.kill(info.pid, 0);
+    } catch {
+      // PID is dead — stale file
+      try { fs.unlinkSync(serverInfoPath); } catch { /* ignore */ }
+      return;
+    }
+    port = info.port;
+  } catch {
+    // File doesn't exist or is unreadable — dashboard not running
+    return;
+  }
+
+  // Construct windowId from machineId + sessionId
+  const windowId = `${vscode.env.machineId}:${vscode.env.sessionId}`;
+
+  // Build window info
+  const workspaceFile = vscode.workspace.workspaceFile;
+  const folders = (vscode.workspace.workspaceFolders ?? []).map((f) => ({ name: f.name, path: f.uri.fsPath }));
+  const windowInfo = {
+    kind: workspaceFile ? 'workspace' : 'directory',
+    name: workspaceFile ? path.basename(workspaceFile.fsPath, '.code-workspace') : folders[0]?.name ?? 'unknown',
+    path: workspaceFile ? workspaceFile.fsPath : folders[0]?.path ?? '',
+    folders,
+  };
+
+  // Create bridge components
+  const client = new BridgeClient(port);
+  const reporter = new StateReporter(windowId, commandManager, []);
+  const handler = new CommandHandler(commandManager, {
+    focusWindow: () => vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup'),
+  });
+  const hookListener = new AgentHookListener(9501);
+  const detector = new AgentDetector();
+
+  // Wire agent hooks → detector → reporter
+  hookListener.onAgentEvent((event) => {
+    detector.handleHookEvent(event);
+    const agents = detector.getAgents();
+    const agentState = agents.find((a) => a.kind === event.agent && a.terminalPid === event.terminalPid);
+    if (agentState) {
+      reporter.updateAgent(agentState.id, {
+        id: agentState.id,
+        name: agentState.name,
+        kind: agentState.kind,
+        status: agentState.status,
+        detail: agentState.detail,
+        terminalId: null,
+      });
+    }
+  });
+
+  // Wire incoming commands
+  client.onMessage((msg) => handler.handle(msg));
+
+  // On connect: send window info + full state
+  let previousState = null;
+  client.onConnected(() => {
+    client.send({ type: 'connect', windowId, window: windowInfo });
+    const fullState = reporter.getFullState();
+    client.send(fullState);
+    previousState = fullState;
+  });
+
+  // On state change: send delta
+  reporter.onStateChanged(() => {
+    if (!client.isConnected || !previousState) return;
+    const delta = reporter.computeDelta(previousState);
+    if (delta) {
+      client.send(delta);
+      previousState = reporter.getFullState();
+    }
+  });
+
+  // Periodic heartbeat: full state every 30s
+  const heartbeatInterval = setInterval(() => {
+    if (!client.isConnected) return;
+    const fullState = reporter.getFullState();
+    client.send(fullState);
+    previousState = fullState;
+  }, 30000);
+
+  // Periodic metrics: every 3s (matching existing Spinup metrics interval)
+  const metricsInterval = setInterval(() => {
+    if (!client.isConnected) return;
+    const states = commandManager.getStates();
+    const items = states
+      .filter((s) => s.metrics)
+      .map((s) => ({ id: s.name, cpu: s.metrics.cpu, mem: s.metrics.mem }));
+    if (items.length > 0) {
+      client.send({ type: 'metrics', windowId, items });
+    }
+  }, 3000);
+
+  // Start connections
+  hookListener.start().catch(() => {}); // port may be in use — non-fatal
+  client.connect();
+
+  // Register disposables
+  context.subscriptions.push(
+    client,
+    reporter,
+    { dispose: () => hookListener.dispose() },
+    detector,
+    { dispose: () => clearInterval(heartbeatInterval) },
+    { dispose: () => clearInterval(metricsInterval) },
+  );
+}
 
 function activate(context) {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
@@ -104,6 +228,8 @@ function activate(context) {
     fileWatcherManager,
     configDisposable,
   );
+
+  initBridge(context, commandManager, terminalManager);
 }
 
 function deactivate() {}

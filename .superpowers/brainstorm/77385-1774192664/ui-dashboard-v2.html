@@ -1,0 +1,163 @@
+<h2>Dashboard — Vertical Process List</h2>
+<p class="subtitle">Each process/agent on its own row with inline actions</p>
+
+<div class="mockup">
+  <div class="mockup-header">Project Dashboard v2</div>
+  <div class="mockup-body" style="padding: 16px; font-size: 12px; display: flex; flex-direction: column; gap: 14px;">
+
+    <!-- Project 1: spinup -->
+    <div style="border: 1px solid rgba(74,222,128,0.25); border-radius: 8px; overflow: hidden; background: rgba(74,222,128,0.02);">
+      <!-- Project header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid rgba(148,163,184,0.1);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 8px; height: 8px; border-radius: 50%; background: #4ade80;"></div>
+          <span style="font-weight: 700; font-size: 14px;">spinup</span>
+          <span style="color: #64748b; font-size: 11px;">~/dev/spinup</span>
+        </div>
+        <button style="background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: #94a3b8; cursor: pointer;">Focus</button>
+      </div>
+      <!-- Process rows -->
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid rgba(148,163,184,0.06);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #4ade80;">●</span>
+            <span style="color: #64748b; font-size: 10px; width: 40px;">TERM</span>
+            <span>node server.js</span>
+            <span style="color: #64748b; font-size: 11px;">2.1% · 48MB</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;" title="Restart">↻</button>
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;" title="Stop">■</button>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid rgba(148,163,184,0.06);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #4ade80;">●</span>
+            <span style="color: #64748b; font-size: 10px; width: 40px;">TERM</span>
+            <span>npm test --watch</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;">↻</button>
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;">■</button>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid rgba(148,163,184,0.06);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #94a3b8;">●</span>
+            <span style="color: #64748b; font-size: 10px; width: 40px;">TERM</span>
+            <span style="color: #94a3b8;">zsh</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;" title="Show">↗</button>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #facc15;">●</span>
+            <span style="color: #64748b; font-size: 10px; width: 40px;">AGENT</span>
+            <span>Claude Code</span>
+            <span style="color: #facc15; font-size: 11px;">refactoring auth module</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;" title="Show">↗</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project 2: my-api (errored) -->
+    <div style="border: 1px solid rgba(248,113,113,0.3); border-radius: 8px; overflow: hidden; background: rgba(248,113,113,0.03);">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid rgba(148,163,184,0.1);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 8px; height: 8px; border-radius: 50%; background: #f87171;"></div>
+          <span style="font-weight: 700; font-size: 14px;">my-api</span>
+          <span style="color: #64748b; font-size: 11px;">~/dev/my-api</span>
+        </div>
+        <button style="background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: #94a3b8; cursor: pointer;">Focus</button>
+      </div>
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(248,113,113,0.05); border-bottom: 1px solid rgba(148,163,184,0.06);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #f87171;">●</span>
+            <span style="color: #64748b; font-size: 10px; width: 40px;">TERM</span>
+            <span>rails server</span>
+            <span style="color: #f87171; font-size: 11px;">crashed · restart 2/5</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button style="background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #f87171; cursor: pointer;" title="Restart">↻</button>
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;" title="Show">↗</button>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #4ade80;">●</span>
+            <span style="color: #64748b; font-size: 10px; width: 40px;">TERM</span>
+            <span>sidekiq</span>
+            <span style="color: #64748b; font-size: 11px;">0.4% · 120MB</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;">↻</button>
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;">■</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project 3: frontend (quiet) -->
+    <div style="border: 1px solid rgba(148,163,184,0.15); border-radius: 8px; overflow: hidden;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid rgba(148,163,184,0.06);">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></div>
+          <span style="font-weight: 700; font-size: 14px;">frontend</span>
+          <span style="color: #64748b; font-size: 11px;">~/dev/frontend</span>
+        </div>
+        <button style="background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: #94a3b8; cursor: pointer;">Focus</button>
+      </div>
+      <div style="display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid rgba(148,163,184,0.06);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #94a3b8;">●</span>
+            <span style="color: #64748b; font-size: 10px; width: 40px;">TERM</span>
+            <span style="color: #94a3b8;">zsh</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;">↗</button>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid rgba(148,163,184,0.06);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #4ade80;">●</span>
+            <span style="color: #64748b; font-size: 10px; width: 40px;">AGENT</span>
+            <span>Copilot</span>
+            <span style="color: #94a3b8; font-size: 11px;">idle</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;">↗</button>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="color: #facc15;">●</span>
+            <span style="color: #64748b; font-size: 10px; width: 40px;">AGENT</span>
+            <span>Claude Code</span>
+            <span style="color: #facc15; font-size: 11px;">reviewing PR</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button style="background: none; border: 1px solid rgba(148,163,184,0.2); border-radius: 4px; padding: 2px 6px; font-size: 11px; color: #94a3b8; cursor: pointer;">↗</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="margin-top: 20px;">
+  <h3>Row Actions</h3>
+  <ul style="font-size: 14px; color: #cbd5e1; line-height: 1.8;">
+    <li><strong>↻ Restart</strong> — restart the process (highlighted red on errored rows)</li>
+    <li><strong>■ Stop</strong> — stop a running process</li>
+    <li><strong>↗ Show</strong> — focus the terminal/agent in its VS Code window</li>
+    <li>Actions are contextual: running processes get stop/restart, idle get show, errored get restart/show</li>
+  </ul>
+</div>

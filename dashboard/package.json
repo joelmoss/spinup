@@ -1,0 +1,21 @@
+{
+  "name": "spinup-dashboard",
+  "version": "0.1.0",
+  "description": "Companion dashboard for Spinup VS Code extension",
+  "main": "main/main.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "test": "mocha test/**/*.test.js --ui tdd --timeout 5000"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.0.0",
+    "@electron-forge/maker-zip": "^7.0.0",
+    "electron": "^33.0.0",
+    "mocha": "^10.2.0"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

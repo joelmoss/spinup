@@ -1,0 +1,46 @@
+// eslint-disable-next-line no-unused-vars
+function renderActions(item, type, windowId) {
+  const container = document.createElement('div');
+  container.className = 'row-actions';
+
+  const status = item.status;
+
+  if (status === 'running' || status === 'working') {
+    const restart = document.createElement('button');
+    restart.className = 'action-btn';
+    restart.textContent = '↻';
+    restart.title = 'Restart';
+    restart.onclick = () => window.bridge.sendCommand(windowId, { type: 'command:restart', processId: item.id });
+    container.appendChild(restart);
+
+    if (type !== 'agent') {
+      const stop = document.createElement('button');
+      stop.className = 'action-btn';
+      stop.textContent = '■';
+      stop.title = 'Stop';
+      stop.onclick = () => window.bridge.sendCommand(windowId, { type: 'command:stop', processId: item.id });
+      container.appendChild(stop);
+    }
+  }
+
+  if (status === 'errored' || status === 'error') {
+    const restart = document.createElement('button');
+    restart.className = 'action-btn danger';
+    restart.textContent = '↻';
+    restart.title = 'Restart';
+    restart.onclick = () => window.bridge.sendCommand(windowId, { type: 'command:restart', processId: item.id });
+    container.appendChild(restart);
+  }
+
+  const show = document.createElement('button');
+  show.className = 'action-btn';
+  show.textContent = '↗';
+  show.title = 'Show';
+  show.onclick = () => {
+    window.bridge.sendCommand(windowId, { type: 'window:focus' });
+    window.bridge.sendCommand(windowId, { type: 'terminal:focus', terminalId: item.id });
+  };
+  container.appendChild(show);
+
+  return container;
+}
